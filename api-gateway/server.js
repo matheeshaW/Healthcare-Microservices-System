@@ -2,38 +2,51 @@ const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const cors = require("cors");
 
 dotenv.config();
 
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-// JWT Middleware
+/* ================= AUTH MIDDLEWARE ================= */
 const authenticate = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const authHeader = req.headers.authorization;
 
-  if (!token) return res.status(401).send("No token");
+  if (!authHeader) return res.status(401).json({ message: "No token" });
+
+  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.headers["x-user"] = JSON.stringify(decoded); // pass to services
     next();
   } catch {
-    res.status(403).send("Invalid token");
+    return res.status(403).json({ message: "Invalid token" });
   }
 };
 
-// Public routes
+/* ================= ROUTES ================= */
+
+// Public (no auth)
 app.use("/api/auth", createProxyMiddleware({
   target: process.env.PATIENT_SERVICE_URL,
   changeOrigin: true
 }));
 
-// Protected routes example
+// Protected (with auth)
 app.use("/api/patient", authenticate, createProxyMiddleware({
   target: process.env.PATIENT_SERVICE_URL,
   changeOrigin: true
 }));
 
+app.use("/api/admin", authenticate, createProxyMiddleware({
+  target: process.env.PATIENT_SERVICE_URL,
+  changeOrigin: true
+}));
+
+/* ================= START ================= */
 app.listen(process.env.PORT, () => {
   console.log(`API Gateway running on port ${process.env.PORT}`);
 });
