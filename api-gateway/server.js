@@ -8,7 +8,6 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
 
 /* ================= AUTH MIDDLEWARE ================= */
 const authenticate = (req, res, next) => {
@@ -32,18 +31,21 @@ const authenticate = (req, res, next) => {
 // Public (no auth)
 app.use("/api/auth", createProxyMiddleware({
   target: process.env.PATIENT_SERVICE_URL,
-  changeOrigin: true
+  changeOrigin: true,
+  pathRewrite: (path) => `/api/auth${path}`
 }));
 
 // Protected (with auth)
 app.use("/api/patient", authenticate, createProxyMiddleware({
   target: process.env.PATIENT_SERVICE_URL,
-  changeOrigin: true
+  changeOrigin: true,
+  pathRewrite: (path) => `/api/patient${path}`
 }));
 
 app.use("/api/admin", authenticate, createProxyMiddleware({
   target: process.env.PATIENT_SERVICE_URL,
-  changeOrigin: true
+  changeOrigin: true,
+  pathRewrite: (path) => `/api/admin${path}`
 }));
 
 /* ================= START ================= */
