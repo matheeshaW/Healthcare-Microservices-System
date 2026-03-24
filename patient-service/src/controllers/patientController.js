@@ -5,9 +5,24 @@ exports.upsertProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    const {
+      age,
+      gender,
+      address,
+      medicalHistory,
+      allergies
+    } = req.body;
+
     const profile = await PatientProfile.findOneAndUpdate(
       { userId },
-      { ...req.body, userId },
+      {
+        userId,
+        age,
+        gender,
+        address,
+        medicalHistory,
+        allergies
+      },
       { new: true, upsert: true }
     );
 

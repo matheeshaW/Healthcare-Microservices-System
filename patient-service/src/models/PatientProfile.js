@@ -11,11 +11,10 @@ const patientProfileSchema = new mongoose.Schema({
   gender: String,
   address: String,
   medicalHistory: [String],
-  allergies: [String],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  allergies: [String]
+}, {
+  timestamps: true,   // ✅ adds createdAt & updatedAt
+  versionKey: false   // ✅ removes __v
 });
 
 module.exports = mongoose.model("PatientProfile", patientProfileSchema);
