@@ -1,0 +1,9 @@
+# CODEOWNERS
+# GitHub Copilot is assigned as an automatic reviewer for all pull requests.
+# This ensures Copilot code review is requested on every PR without
+# collaborators needing to manually add it as a reviewer.
+#
+# NOTE: For this to work, the repository owner must also enable
+# "Allow GitHub Copilot to be requested as a reviewer" under:
+# Settings → General → Pull Requests → Copilot code review
+* @copilot
