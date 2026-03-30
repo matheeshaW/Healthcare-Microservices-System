@@ -207,7 +207,7 @@ exports.updatePrescriptionStatus = async (req, res) => {
     const prescription = await Prescription.findByIdAndUpdate(
       id,
       { status },
-      { new: true },
+      { returnDocument: "after" },
     ).populate("doctorId", "name specialization");
 
     if (!prescription) {
@@ -275,7 +275,7 @@ exports.editPrescription = async (req, res) => {
     }
 
     await prescription.save();
-    await prescription.populate("doctor", "name specialization");
+    await prescription.populate("doctorId", "name specialization");
 
     res.status(200).json({
       success: true,
