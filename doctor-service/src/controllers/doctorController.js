@@ -36,8 +36,11 @@ exports.createDoctorProfile = async (req, res) => {
       });
     }
 
-    // check doctor profile existence
-    const doctorExists = await Doctor.findOne({ userId: req.userId });
+    // check doctor profile existence (only active ones)
+    const doctorExists = await Doctor.findOne({
+      userId: req.userId,
+      isActive: true, // Only check ACTIVE profiles
+    });
     if (doctorExists) {
       return res.status(400).json({
         success: false,
