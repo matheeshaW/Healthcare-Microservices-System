@@ -138,11 +138,10 @@ exports.getPatientPrescriptions = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    const prescriptions = await prescription
-      .find({
-        patientId,
-        status: { $ne: "expired" },
-      })
+    const prescriptions = await Prescription.find({
+      patientId,
+      status: { $ne: "expired" },
+    })
       .populate("doctorId", "name specialization hospital")
       .sort({ createdAt: -1 });
 
