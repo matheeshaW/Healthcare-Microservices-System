@@ -186,7 +186,7 @@ exports.searchDoctors = async (req, res) => {
       filter.verified = true;
     }
 
-    const doctors = (await Doctor.find(filter)).toSorted({ rating: -1 });
+    const doctors = await Doctor.find(filter).sort({ rating: -1 });
 
     res.status(200).json({
       success: true,
