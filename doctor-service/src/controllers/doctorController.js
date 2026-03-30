@@ -106,7 +106,7 @@ exports.getDoctorProfile = async (req, res) => {
 // Get doctor profile of current logged-in doctor
 exports.getMyprofile = async (req, res) => {
   try {
-    const doctor = await Doctor.findOne({ userId: req.userId });
+    const doctor = await Doctor.findOne({ userId: req.userId, isActive: true });
 
     if (!doctor) {
       return res.status(404).json({
@@ -223,7 +223,11 @@ exports.getAllDoctors = async (req, res) => {
       });
     }
 
-    const doctors = await Doctor.find().sort({ createdAt: -1 });
+    // By default show only active
+    const { includeDeleted } = req.query;
+    const filter = includeDeleted === "true" ? {} : { isActive: true };
+
+    const doctors = await Doctor.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
