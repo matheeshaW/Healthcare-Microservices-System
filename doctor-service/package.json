@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Doctor Service for Healthcare Microservices",
   "main": "server.js",
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "nodemon server.js"
   },

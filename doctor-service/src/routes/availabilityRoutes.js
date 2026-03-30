@@ -28,7 +28,7 @@ router.get("/doctor/:doctorId", availabilityController.getAvailability);
  * PUT /api/availability/:id
  * Update availability slots
  */
-router.put("/:id", availabilityController.UpdateAvailability);
+router.put("/:id", availabilityController.updateAvailability);
 
 /**
  * PUT /api/availability/:id/book
