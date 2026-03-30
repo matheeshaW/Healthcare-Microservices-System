@@ -5,7 +5,6 @@ const DoctorSchema = new mongoose.Schema(
     userId: {
       type: String,
       required: true,
-      unique: true,
     },
 
     name: {
@@ -75,6 +74,16 @@ const DoctorSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+  },
+);
+
+// Partial unique index: only active profiles count toward uniqueness
+DoctorSchema.index(
+  { userId: 1 },
+  {
+    unique: true,
+    sparse: true,
+    partialFilterExpression: { isActive: true },
   },
 );
 

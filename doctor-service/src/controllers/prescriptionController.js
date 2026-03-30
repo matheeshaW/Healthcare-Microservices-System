@@ -37,7 +37,11 @@ exports.issuePrescription = async (req, res) => {
       });
     }
 
-    const doctor = await Doctor.findOne({ userId: req.userId });
+    const doctor = await Doctor.findOne({
+      userId: req.userId,
+      isActive: true,
+      verified: true,
+    });
     if (!doctor) {
       return res.status(404).json({
         success: false,
@@ -103,7 +107,11 @@ exports.issuePrescription = async (req, res) => {
 exports.getMyPrescriptions = async (req, res) => {
   try {
     // fetch doctor profile to get doctor ID
-    const doctor = await Doctor.findOne({ userId: req.userId });
+    const doctor = await Doctor.findOne({
+      userId: req.userId,
+      isActive: true,
+      verified: true,
+    });
     if (!doctor) {
       return res.status(404).json({
         success: false,
@@ -207,7 +215,7 @@ exports.updatePrescriptionStatus = async (req, res) => {
     const prescription = await Prescription.findByIdAndUpdate(
       id,
       { status },
-      { returnDocument: "after" },
+      { new: true },
     ).populate("doctorId", "name specialization");
 
     if (!prescription) {
@@ -247,7 +255,11 @@ exports.editPrescription = async (req, res) => {
     }
 
     // Check authorization
-    const doctor = await Doctor.findOne({ userId: req.userId });
+    const doctor = await Doctor.findOne({
+      userId: req.userId,
+      isActive: true,
+      verified: true,
+    });
     if (!doctor || doctor._id.toString() !== prescription.doctorId.toString()) {
       return res.status(403).json({
         success: false,

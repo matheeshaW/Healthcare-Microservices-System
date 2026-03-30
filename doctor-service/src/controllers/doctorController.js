@@ -16,7 +16,9 @@ exports.createDoctorProfile = async (req, res) => {
     if (
       !name ||
       !specialization ||
-      !experience ||
+      experience === null ||
+      experience === undefined ||
+      typeof experience !== "number" ||
       !hospital ||
       !licenseNumber ||
       !phoneNumber
@@ -32,7 +34,7 @@ exports.createDoctorProfile = async (req, res) => {
     if (existingDoctor) {
       return res.status(400).json({
         success: false,
-        message: "Doctor with this licence number already exists",
+        message: "Doctor with this license number already exists",
       });
     }
 
@@ -92,7 +94,7 @@ exports.getDoctorProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       data: doctor,
-      message: "Doctor profile retieved successfully.",
+      message: "Doctor profile retrieved successfully.",
     });
   } catch (error) {
     console.error("Error fetching doctor profile:", error);
@@ -154,7 +156,7 @@ exports.updateDoctorProfile = async (req, res) => {
 
     // update allowed fields
     if (name) doctor.name = name;
-    if (experience) doctor.experience = experience;
+    if (experience !== undefined) doctor.experience = experience;
     if (hospital) doctor.hospital = hospital;
     if (phoneNumber) doctor.phoneNumber = phoneNumber;
 

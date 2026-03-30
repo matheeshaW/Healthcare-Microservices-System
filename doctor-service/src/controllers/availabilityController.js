@@ -15,7 +15,12 @@ exports.createAvailability = async (req, res) => {
     }
 
     // find doctor by userId
-    const doctor = await Doctor.findOne({ userId: req.userId });
+    const doctor = await Doctor.findOne({
+      userId: req.userId,
+      isActive: true,
+      verified: true,
+    });
+
     if (!doctor) {
       return res.status(404).json({
         success: false,
@@ -113,7 +118,11 @@ exports.getMyAvailability = async (req, res) => {
     const { fromDate, toDate } = req.query;
 
     // find doctor by userId
-    const doctor = await Doctor.findOne({ userId: req.userId });
+    const doctor = await Doctor.findOne({
+      userId: req.userId,
+      isActive: true,
+      verified: true,
+    });
     if (!doctor) {
       return res.status(404).json({
         success: false,
@@ -152,7 +161,7 @@ exports.getMyAvailability = async (req, res) => {
 };
 
 // update availability slots
-exports.UpdateAvailability = async (req, res) => {
+exports.updateAvailability = async (req, res) => {
   try {
     const { id } = req.params;
     const { slots } = req.body;
@@ -164,17 +173,8 @@ exports.UpdateAvailability = async (req, res) => {
       });
     }
 
-    const availability = await Availability.findByIdAndUpdate(
-      id,
-      {
-        slots: slots.map((slot) => ({
-          time: slot.time,
-          isBooked: slot.isBooked || false,
-          appointmentId: slot.appointmentId || null,
-        })),
-      },
-      { new: true },
-    );
+    // Find the availability
+    const availability = await Availability.findById(id).populate("doctorId");
 
     if (!availability) {
       return res.status(404).json({
@@ -183,9 +183,36 @@ exports.UpdateAvailability = async (req, res) => {
       });
     }
 
+    // Authorization: only the doctor who owns this availability or admin can update
+    if (
+      availability.doctorId.userId !== req.userId &&
+      req.userRole !== "admin"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized. You can only update your own availability.",
+      });
+    }
+
+    // WARNING: Only allow updating time field, NOT booking fields
+    // Booking must go through bookSlot/releaseSlot endpoints
+    const sanitizedSlots = slots.map((slot) => ({
+      time: slot.time,
+      // NEVER allow direct setting of booking state from client
+      // These are managed by bookSlot and releaseSlot only
+      isBooked: false, // Force reset (or preserve existing)
+      appointmentId: null, // Force reset (or preserve existing)
+    }));
+
+    const updated = await Availability.findByIdAndUpdate(
+      id,
+      { slots: sanitizedSlots },
+      { new: true },
+    );
+
     res.status(200).json({
       success: true,
-      data: availability,
+      data: updated,
       message: "Availability updated successfully.",
     });
   } catch (error) {
@@ -197,6 +224,9 @@ exports.UpdateAvailability = async (req, res) => {
   }
 };
 
+// TODO: When moving to production, implement service-to-service auth
+// for bookSlot and releaseSlot using X-Service-Token header
+// to prevent accidental misuse or unauthorized internal calls
 // Mark a slot as booked (called by Appointment Service)
 /**
  * Mark a slot as booked (called by Appointment Service)
