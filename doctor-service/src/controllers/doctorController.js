@@ -182,7 +182,14 @@ exports.searchDoctors = async (req, res) => {
       filter.specialization = specialization;
     }
 
-    if (verified !== "false") {
+    if (verified === "true") {
+      filter.verified = true;
+    } else if (verified === "false") {
+      filter.verified = false;
+    } else if (verified === "all") {
+      // Don't add verified filter - show ALL doctors
+      // (no filter.verified line)
+    } else {
       filter.verified = true;
     }
 
