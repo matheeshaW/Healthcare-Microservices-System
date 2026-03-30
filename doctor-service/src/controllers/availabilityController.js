@@ -198,19 +198,41 @@ exports.UpdateAvailability = async (req, res) => {
 };
 
 // Mark a slot as booked (called by Appointment Service)
+/**
+ * Mark a slot as booked (called by Appointment Service)
+ * This is the critical function for appointment system integration
+ */
 exports.bookSlot = async (req, res) => {
   try {
     const { id } = req.params;
-    const { slotIndex, appointmentId } = req.body;
 
-    if (slotIndex === undefined || !appointmentId) {
+    // Better validation - check if body exists first
+    if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Please provide slotIndex and appointmentId.",
+        message:
+          "Request body is required. Expected format: { slotIndex: 0, appointmentId: 'apt-123' }",
       });
     }
 
-    // find availability
+    const { slotIndex, appointmentId } = req.body;
+
+    // Validate required fields
+    if (slotIndex === undefined || slotIndex === null) {
+      return res.status(400).json({
+        success: false,
+        message: "slotIndex is required and must be a number (0-based index)",
+      });
+    }
+
+    if (!appointmentId) {
+      return res.status(400).json({
+        success: false,
+        message: "appointmentId is required",
+      });
+    }
+
+    // Find availability
     const availability = await Availability.findById(id);
     if (!availability) {
       return res.status(404).json({
@@ -219,13 +241,15 @@ exports.bookSlot = async (req, res) => {
       });
     }
 
+    // Check if slot exists
     if (slotIndex < 0 || slotIndex >= availability.slots.length) {
       return res.status(400).json({
         success: false,
-        message: "Invalid slot index.",
+        message: `Invalid slot index. Valid range: 0-${availability.slots.length - 1}`,
       });
     }
 
+    // Check if slot is already booked
     if (availability.slots[slotIndex].isBooked) {
       return res.status(400).json({
         success: false,
@@ -233,7 +257,7 @@ exports.bookSlot = async (req, res) => {
       });
     }
 
-    // mark slot as booked
+    // Mark slot as booked
     availability.slots[slotIndex].isBooked = true;
     availability.slots[slotIndex].appointmentId = appointmentId;
 
