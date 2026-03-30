@@ -43,9 +43,9 @@ exports.issuePrescription = async (req, res) => {
       verified: true,
     });
     if (!doctor) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        message: "Doctor profile not found.",
+        message: "Doctor profile not found, inactive, or not verified.",
       });
     }
 
@@ -113,9 +113,9 @@ exports.getMyPrescriptions = async (req, res) => {
       verified: true,
     });
     if (!doctor) {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
-        message: "Doctor profile not found.",
+        message: "Doctor profile not found, inactive, or not verified.",
       });
     }
 

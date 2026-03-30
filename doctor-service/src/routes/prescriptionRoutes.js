@@ -28,10 +28,10 @@ router.get(
 );
 
 /**
- * GET /api/prescriptions/:id
- * Get single prescription by ID
+ * PUT /api/prescriptions/:id/status
+ * Update prescription status
  */
-router.get("/:id", prescriptionController.getPrescriptionById);
+router.put("/:id/status", prescriptionController.updatePrescriptionStatus);
 
 /**
  * PUT /api/prescriptions/:id
@@ -40,9 +40,9 @@ router.get("/:id", prescriptionController.getPrescriptionById);
 router.put("/:id", prescriptionController.editPrescription);
 
 /**
- * PUT /api/prescriptions/:id/status
- * Update prescription status
+ * GET /api/prescriptions/:id
+ * Get single prescription by ID
  */
-router.put("/:id/status", prescriptionController.updatePrescriptionStatus);
+router.get("/:id", prescriptionController.getPrescriptionById);
 
 module.exports = router;
