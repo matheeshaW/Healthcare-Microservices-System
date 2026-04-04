@@ -70,3 +70,72 @@ exports.getDoctorAppointments = async (req, res) => {
     });
   }
 };
+
+exports.updateAppointmentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+     const allowedStatuses = ["pending", "confirmed", "cancelled", "completed"];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    appointment.status = status;
+
+    await appointment.save();
+
+    res.json({
+      success: true,
+      data: appointment,
+      message: "Appointment status updated",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+exports.cancelAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    appointment.status = "cancelled";
+
+    await appointment.save();
+
+    res.json({
+      success: true,
+      message: "Appointment cancelled",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
