@@ -48,6 +48,12 @@ app.use("/api/admin", authenticate, createProxyMiddleware({
   pathRewrite: (path) => `/api/admin${path}`
 }));
 
+// Payment Service Route
+app.use("/api/payment", authenticate, createProxyMiddleware({
+  target: process.env.PAYMENT_SERVICE_URL,
+  changeOrigin: true
+}));
+
 /* ================= START ================= */
 app.listen(process.env.PORT, () => {
   console.log(`API Gateway running on port ${process.env.PORT}`);
