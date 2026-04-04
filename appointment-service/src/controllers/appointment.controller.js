@@ -1,4 +1,5 @@
 const appointmentService = require("../services/appointment.service");
+const rabbitmqService = require("../services/rabbitmq.service");
 
 // Create Appointment (patient only)
 exports.createAppointment = async (req, res) => {
@@ -26,6 +27,10 @@ exports.createAppointment = async (req, res) => {
       doctorId,
       date,
       time,
+    });
+
+    rabbitmqService.publishAppointmentCreated(appointment).catch((error) => {
+      console.warn("Failed to publish appointment.created event:", error.message);
     });
 
     return res.status(201).json({
