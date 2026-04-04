@@ -6,6 +6,21 @@ exports.createAppointment = async (req, res) => {
     const { doctorId, date, time } = req.body;
     const patientId = req.user.id;
 
+    const token = req.headers.authorization?.split(" ")[1];
+    const isAvailable = await appointmentService.checkDoctorAvailability({
+      doctorId,
+      date,
+      time,
+      token,
+    });
+
+    if (!isAvailable) {
+      return res.status(409).json({
+        success: false,
+        message: "Selected slot is not available",
+      });
+    }
+
     const appointment = await appointmentService.create({
       patientId,
       doctorId,
@@ -13,12 +28,19 @@ exports.createAppointment = async (req, res) => {
       time,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: appointment,
       message: "Appointment created successfully",
     });
   } catch (error) {
+    if (error.response || error.code === "ECONNABORTED") {
+      return res.status(503).json({
+        success: false,
+        message: "Doctor service is unavailable",
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: error.message,
