@@ -1,12 +1,10 @@
 const Appointment = require("../models/appointment.model");
 
-// Create Appointment
+// Create Appointment (patient only)
 exports.createAppointment = async (req, res) => {
   try {
     const { doctorId, date, time } = req.body;
-
-    // For now (temporary) — later replace with JWT
-    const patientId = "temp-user-id";
+    const patientId = req.user.id;
 
     const appointment = new Appointment({
       patientId,
@@ -33,8 +31,7 @@ exports.createAppointment = async (req, res) => {
 // Get appointments for logged-in patient
 exports.getMyAppointments = async (req, res) => {
   try {
-    // temporary (replace with JWT later)
-    const patientId = "temp-user-id";
+    const patientId = req.user.id;
 
     const appointments = await Appointment.find({ patientId });
 
@@ -51,10 +48,10 @@ exports.getMyAppointments = async (req, res) => {
   }
 };
 
-// Get appointments for doctor
+// Get appointments for logged-in doctor
 exports.getDoctorAppointments = async (req, res) => {
   try {
-    const { doctorId } = req.query;
+    const doctorId = req.user.id;
 
     const appointments = await Appointment.find({ doctorId });
 
@@ -85,8 +82,7 @@ exports.updateAppointmentStatus = async (req, res) => {
       });
     }
 
-     const allowedStatuses = ["pending", "confirmed", "cancelled", "completed"];
-
+    const allowedStatuses = ["pending", "confirmed", "cancelled", "completed"];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -94,8 +90,18 @@ exports.updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    appointment.status = status;
+    // doctor can update only their assigned appointment (admin can update any)
+    if (
+      req.user.role === "doctor" &&
+      String(appointment.doctorId) !== String(req.user.id)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
 
+    appointment.status = status;
     await appointment.save();
 
     res.json({
@@ -114,7 +120,6 @@ exports.updateAppointmentStatus = async (req, res) => {
 exports.cancelAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-
     const appointment = await Appointment.findById(id);
 
     if (!appointment) {
@@ -124,12 +129,23 @@ exports.cancelAppointment = async (req, res) => {
       });
     }
 
-    appointment.status = "cancelled";
+    // patient can cancel only own appointment (admin can cancel any)
+    if (
+      req.user.role === "patient" &&
+      String(appointment.patientId) !== String(req.user.id)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
 
+    appointment.status = "cancelled";
     await appointment.save();
 
     res.json({
       success: true,
+      data: appointment,
       message: "Appointment cancelled",
     });
   } catch (error) {
