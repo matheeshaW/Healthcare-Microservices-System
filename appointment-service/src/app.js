@@ -3,9 +3,11 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 const app = express();
+const appointmentRoutes = require("./routes/appointment.routes");
 
 // Middleware
 app.use(express.json());
+app.use("/api/appointments", appointmentRoutes);
 
 // Test route
 app.get("/", (req, res) => {
