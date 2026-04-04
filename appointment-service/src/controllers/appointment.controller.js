@@ -1,4 +1,4 @@
-const Appointment = require("../models/appointment.model");
+const appointmentService = require("../services/appointment.service");
 
 // Create Appointment (patient only)
 exports.createAppointment = async (req, res) => {
@@ -6,14 +6,12 @@ exports.createAppointment = async (req, res) => {
     const { doctorId, date, time } = req.body;
     const patientId = req.user.id;
 
-    const appointment = new Appointment({
+    const appointment = await appointmentService.create({
       patientId,
       doctorId,
       date,
       time,
     });
-
-    await appointment.save();
 
     res.status(201).json({
       success: true,
@@ -33,7 +31,7 @@ exports.getMyAppointments = async (req, res) => {
   try {
     const patientId = req.user.id;
 
-    const appointments = await Appointment.find({ patientId });
+    const appointments = await appointmentService.findByPatientId(patientId);
 
     res.json({
       success: true,
@@ -53,7 +51,7 @@ exports.getDoctorAppointments = async (req, res) => {
   try {
     const doctorId = req.user.id;
 
-    const appointments = await Appointment.find({ doctorId });
+    const appointments = await appointmentService.findByDoctorId(doctorId);
 
     res.json({
       success: true,
@@ -73,7 +71,7 @@ exports.updateAppointmentStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const appointment = await Appointment.findById(id);
+    const appointment = await appointmentService.findById(id);
 
     if (!appointment) {
       return res.status(404).json({
@@ -102,7 +100,7 @@ exports.updateAppointmentStatus = async (req, res) => {
     }
 
     appointment.status = status;
-    await appointment.save();
+    await appointmentService.save(appointment);
 
     res.json({
       success: true,
@@ -120,7 +118,7 @@ exports.updateAppointmentStatus = async (req, res) => {
 exports.cancelAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    const appointment = await Appointment.findById(id);
+    const appointment = await appointmentService.findById(id);
 
     if (!appointment) {
       return res.status(404).json({
@@ -141,7 +139,7 @@ exports.cancelAppointment = async (req, res) => {
     }
 
     appointment.status = "cancelled";
-    await appointment.save();
+    await appointmentService.save(appointment);
 
     res.json({
       success: true,
@@ -159,7 +157,7 @@ exports.cancelAppointment = async (req, res) => {
 // Admin: view all appointments
 exports.getAllAppointments = async (req, res) => {
   try {
-    const appointments = await Appointment.find().sort({ createdAt: -1 });
+    const appointments = await appointmentService.findAll();
 
     res.json({
       success: true,
