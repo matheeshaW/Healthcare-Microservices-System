@@ -29,3 +29,44 @@ exports.createAppointment = async (req, res) => {
     });
   }
 };
+
+// Get appointments for logged-in patient
+exports.getMyAppointments = async (req, res) => {
+  try {
+    // temporary (replace with JWT later)
+    const patientId = "temp-user-id";
+
+    const appointments = await Appointment.find({ patientId });
+
+    res.json({
+      success: true,
+      data: appointments,
+      message: "Patient appointments fetched",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Get appointments for doctor
+exports.getDoctorAppointments = async (req, res) => {
+  try {
+    const { doctorId } = req.query;
+
+    const appointments = await Appointment.find({ doctorId });
+
+    res.json({
+      success: true,
+      data: appointments,
+      message: "Doctor appointments fetched",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
