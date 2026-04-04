@@ -155,3 +155,21 @@ exports.cancelAppointment = async (req, res) => {
     });
   }
 };
+
+// Admin: view all appointments
+exports.getAllAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find().sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: appointments,
+      message: "All appointments fetched",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

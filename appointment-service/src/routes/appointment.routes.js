@@ -3,19 +3,37 @@ const router = express.Router();
 
 const { authenticate } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
+const {
+    validateCreateAppointment,
+    validateStatusUpdate,
+} = require("../middleware/validateAppointment");
 
 const {
-  createAppointment,
-  getMyAppointments,
-  getDoctorAppointments,
-  updateAppointmentStatus,
-  cancelAppointment,
+    createAppointment,
+    getMyAppointments,
+    getDoctorAppointments,
+    getAllAppointments,
+    updateAppointmentStatus,
+    cancelAppointment,
 } = require("../controllers/appointment.controller");
 
-router.post("/", authenticate, authorize("patient"), createAppointment);
 router.get("/my", authenticate, authorize("patient"), getMyAppointments);
 router.get("/doctor", authenticate, authorize("doctor"), getDoctorAppointments);
-router.put("/:id/status", authenticate, authorize("doctor", "admin"), updateAppointmentStatus);
+router.get("/admin/all", authenticate, authorize("admin"), getAllAppointments);
+router.post(
+    "/",
+    authenticate,
+    authorize("patient"),
+    validateCreateAppointment,
+    createAppointment
+);
+router.put(
+    "/:id/status",
+    authenticate,
+    authorize("doctor", "admin"),
+    validateStatusUpdate,
+    updateAppointmentStatus
+);
 router.delete("/:id", authenticate, authorize("patient", "admin"), cancelAppointment);
 
 module.exports = router;
