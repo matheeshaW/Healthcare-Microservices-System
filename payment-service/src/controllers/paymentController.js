@@ -6,6 +6,20 @@ const { sendNotification } = require('../services/rabbitmqService');
 const processPayment = async (req, res) => {
     try {
         const { appointmentId, patientId, patientEmail, amount } = req.body;
+
+        
+        if (!appointmentId || !patientId || !patientEmail || !amount) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Missing required fields: appointmentId, patientId, patientEmail, and amount are required.' 
+            });
+        }
+
+      
+        if (amount <= 0 || isNaN(amount)) {
+            return res.status(400).json({ success: false, error: 'Invalid payment amount.' });
+        }
+
         const transactionId = "TXN_" + crypto.randomBytes(6).toString('hex').toUpperCase();
 
         const newPayment = new Payment({
@@ -15,14 +29,19 @@ const processPayment = async (req, res) => {
         console.log(`💰 Payment saved to DB: ${transactionId}`);
 
         // Trigger the Notification Service
-        sendNotification({
-            patientEmail: patientEmail,
-            message: `Hello! Your payment of Rs. ${amount} for appointment ${appointmentId} was successful. Your transaction ID is ${transactionId}.`
-        });
+        try {
+            await sendNotification({
+                patientEmail: patientEmail,
+                message: `Hello! Your payment of Rs. ${amount} for appointment ${appointmentId} was successful. Your transaction ID is ${transactionId}.`
+            });
+            console.log('🚀 Receipt request sent to Notification Service!');
+        } catch (brokerErr) {
+            console.error('⚠️ Payment saved, but failed to send to RabbitMQ:', brokerErr.message);
+        }
 
         res.status(200).json({ success: true, message: 'Payment processed successfully', transactionId });
     } catch (error) {
-        console.error(error);
+        console.error('Payment Processing Error:', error);
         res.status(500).json({ success: false, error: 'Payment processing failed' });
     }
 };
@@ -30,13 +49,18 @@ const processPayment = async (req, res) => {
 // READ: Get payment history for a specific patient
 const getPaymentHistory = async (req, res) => {
     try {
-        const { patientEmail } = req.params;
-        // Find all payments for this email, sorted by newest first
-        const payments = await Payment.find({ patientEmail }).sort({ createdAt: -1 });
+        const { patientId } = req.params;
+        
+        if (!patientId) {
+             return res.status(400).json({ success: false, error: 'Patient ID is required.' });
+        }
+
+        // Find all payments for this ID, sorted by newest first
+        const payments = await Payment.find({ patientId }).sort({ createdAt: -1 });
         
         res.status(200).json({ success: true, count: payments.length, data: payments });
     } catch (error) {
-        console.error(error);
+        console.error('History Fetch Error:', error);
         res.status(500).json({ success: false, error: 'Failed to fetch payment history' });
     }
 };

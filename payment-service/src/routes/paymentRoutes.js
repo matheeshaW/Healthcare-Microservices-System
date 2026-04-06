@@ -4,6 +4,6 @@ const { processPayment, getPaymentHistory } = require('../controllers/paymentCon
 
 // Define the endpoints
 router.post('/pay', processPayment);
-router.get('/history/:patientEmail', getPaymentHistory);
+router.get('/history/:patientId', getPaymentHistory);
 
 module.exports = router;
