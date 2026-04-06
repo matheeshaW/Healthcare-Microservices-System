@@ -51,7 +51,8 @@ app.use("/api/admin", authenticate, createProxyMiddleware({
 // Payment Service Route
 app.use("/api/payment", authenticate, createProxyMiddleware({
   target: process.env.PAYMENT_SERVICE_URL,
-  changeOrigin: true
+  changeOrigin: true,
+  pathRewrite: (path) => `/api/payment${path}`
 }));
 
 /* ================= START ================= */
