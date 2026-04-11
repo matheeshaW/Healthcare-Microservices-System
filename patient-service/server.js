@@ -15,7 +15,6 @@ app.use("/api/auth", require("./src/routes/authRoutes"));
 app.use("/api/patient", require("./src/routes/patientRoutes"));
 app.use("/api/admin", require("./src/routes/adminRoutes"));
 app.use("/api/reports", require("./src/routes/reportRoutes"));
-app.use("/uploads", express.static("uploads"));
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
