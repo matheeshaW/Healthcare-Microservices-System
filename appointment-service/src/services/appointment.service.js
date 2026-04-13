@@ -9,6 +9,27 @@ function buildAuthHeaders(token) {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+exports.getMyDoctorProfile = async ({ token }) => {
+  const baseUrl = process.env.DOCTOR_SERVICE_URL;
+
+  if (!baseUrl) {
+    throw new Error("DOCTOR_SERVICE_URL is not configured");
+  }
+
+  const endpoint = process.env.DOCTOR_ME_PATH || "/api/doctors/me";
+  const response = await axios.get(`${baseUrl}${endpoint}`, {
+    headers: buildAuthHeaders(token),
+    timeout: 5000,
+  });
+
+  const doctor = response.data?.data;
+  if (!doctor?._id) {
+    throw new Error("Doctor profile not found for current user");
+  }
+
+  return doctor;
+};
+
 exports.create = (payload) => Appointment.create(payload);
 
 exports.deleteById = (id) => Appointment.findByIdAndDelete(id);
@@ -55,6 +76,32 @@ exports.findMatchingSlot = (availabilities, date, time) => {
 
     const slotIndex = availability.slots.findIndex(
       (slot) => slot.time === time && !slot.isBooked,
+    );
+
+    if (slotIndex !== -1) {
+      return {
+        availabilityId: String(availability._id),
+        slotIndex,
+      };
+    }
+  }
+
+  return null;
+};
+
+exports.findBookedSlotForAppointment = (availabilities, date, time, appointmentId) => {
+  const targetDate = normalizeDate(date);
+
+  for (const availability of availabilities) {
+    if (normalizeDate(availability.date) !== targetDate) {
+      continue;
+    }
+
+    const slotIndex = availability.slots.findIndex(
+      (slot) =>
+        slot.time === time &&
+        slot.isBooked &&
+        String(slot.appointmentId) === String(appointmentId),
     );
 
     if (slotIndex !== -1) {
