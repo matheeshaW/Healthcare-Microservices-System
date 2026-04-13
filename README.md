@@ -16,7 +16,7 @@ This repository contains a Node.js microservices setup for a healthcare system. 
 
 ### Prerequisites
 
-- Node.js 18+ (Node.js 20+ recommended)
+- Node.js >=20.19.0 (npm >=9.0.0)
 - MongoDB (Atlas or local)
 - Cloudinary account (for medical report uploads)
 
