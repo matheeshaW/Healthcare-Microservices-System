@@ -219,9 +219,22 @@ exports.updateAppointmentStatus = async (req, res) => {
       message: "Appointment status updated",
     });
   } catch (error) {
-    res.status(500).json({
+    const isUpstreamConnectivityOrTimeoutError =
+      error?.isAxiosError &&
+      (!error.response ||
+        [
+          "ECONNABORTED",
+          "ECONNREFUSED",
+          "ENOTFOUND",
+          "EAI_AGAIN",
+          "ETIMEDOUT",
+        ].includes(error.code));
+
+    res.status(isUpstreamConnectivityOrTimeoutError ? 503 : 500).json({
       success: false,
-      message: error.message,
+      message: isUpstreamConnectivityOrTimeoutError
+        ? "Doctor service is unavailable"
+        : error.message,
     });
   }
 };
