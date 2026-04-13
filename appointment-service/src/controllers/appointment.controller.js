@@ -104,7 +104,9 @@ exports.getMyAppointments = async (req, res) => {
 // Get appointments for logged-in doctor
 exports.getDoctorAppointments = async (req, res) => {
   try {
-    const doctorId = req.user.id;
+    const token = req.headers.authorization?.split(" ")[1];
+    const doctor = await appointmentService.getMyDoctorProfile({ token });
+    const doctorId = doctor._id;
 
     const appointments = await appointmentService.findByDoctorId(doctorId);
 
@@ -145,14 +147,15 @@ exports.updateAppointmentStatus = async (req, res) => {
     }
 
     // doctor can update only their assigned appointment (admin can update any)
-    if (
-      req.user.role === "doctor" &&
-      String(appointment.doctorId) !== String(req.user.id)
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied",
-      });
+    if (req.user.role === "doctor") {
+      const doctor = await appointmentService.getMyDoctorProfile({ token });
+
+      if (String(appointment.doctorId) !== String(doctor._id)) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied",
+        });
+      }
     }
 
     if (status === "cancelled") {
@@ -162,10 +165,11 @@ exports.updateAppointmentStatus = async (req, res) => {
         token,
       });
 
-      const slotRef = appointmentService.findMatchingSlot(
+      const slotRef = appointmentService.findBookedSlotForAppointment(
         availabilities,
         appointment.date,
         appointment.time,
+        appointment._id,
       );
 
       if (slotRef) {
@@ -234,10 +238,11 @@ exports.cancelAppointment = async (req, res) => {
       token,
     });
 
-    const slotRef = appointmentService.findMatchingSlot(
+    const slotRef = appointmentService.findBookedSlotForAppointment(
       availabilities,
       appointment.date,
       appointment.time,
+      appointment._id,
     );
 
     if (slotRef) {
