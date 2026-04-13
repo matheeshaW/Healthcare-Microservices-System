@@ -138,14 +138,6 @@ exports.updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    const allowedStatuses = ["pending", "confirmed", "cancelled", "completed"];
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid status",
-      });
-    }
-
     // doctor can update only their assigned appointment (admin can update any)
     if (req.user.role === "doctor") {
       const doctor = await appointmentService.getMyDoctorProfile({ token });
