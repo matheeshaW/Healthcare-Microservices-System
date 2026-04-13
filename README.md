@@ -28,6 +28,7 @@ api-gateway/.env
 PORT=5000
 JWT_SECRET=supersecretkey
 PATIENT_SERVICE_URL=http://localhost:5001
+APPOINTMENT_SERVICE_URL=http://localhost:5003
 ```
 
 patient-service/.env
