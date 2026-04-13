@@ -1,7 +1,17 @@
 const axios = require("axios");
 const Appointment = require("../models/appointment.model");
 
+function normalizeDate(value) {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function buildAuthHeaders(token) {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 exports.create = (payload) => Appointment.create(payload);
+
+exports.deleteById = (id) => Appointment.findByIdAndDelete(id);
 
 exports.findByPatientId = (patientId) =>
   Appointment.find({ patientId }).sort({ createdAt: -1 });
@@ -15,7 +25,7 @@ exports.findById = (id) => Appointment.findById(id);
 
 exports.save = (appointment) => appointment.save();
 
-exports.checkDoctorAvailability = async ({ doctorId, date, time, token }) => {
+exports.fetchDoctorAvailabilities = async ({ doctorId, date, token }) => {
   const baseUrl = process.env.DOCTOR_SERVICE_URL;
 
   if (!baseUrl) {
@@ -23,22 +33,92 @@ exports.checkDoctorAvailability = async ({ doctorId, date, time, token }) => {
   }
 
   const endpointTemplate =
-    process.env.DOCTOR_AVAILABILITY_PATH || "/api/doctors/:doctorId/availability";
+    process.env.DOCTOR_AVAILABILITY_PATH || "/api/availability/doctor/:doctorId";
   const endpoint = endpointTemplate.replace(":doctorId", doctorId);
 
   const response = await axios.get(`${baseUrl}${endpoint}`, {
-    params: { date, time },
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    params: date ? { fromDate: date, toDate: date } : {},
+    headers: buildAuthHeaders(token),
     timeout: 5000,
   });
 
-  if (typeof response.data?.data?.available === "boolean") {
-    return response.data.data.available;
+  return Array.isArray(response.data?.data) ? response.data.data : [];
+};
+
+exports.findMatchingSlot = (availabilities, date, time) => {
+  const targetDate = normalizeDate(date);
+
+  for (const availability of availabilities) {
+    if (normalizeDate(availability.date) !== targetDate) {
+      continue;
+    }
+
+    const slotIndex = availability.slots.findIndex(
+      (slot) => slot.time === time && !slot.isBooked,
+    );
+
+    if (slotIndex !== -1) {
+      return {
+        availabilityId: String(availability._id),
+        slotIndex,
+      };
+    }
   }
 
-  if (typeof response.data?.available === "boolean") {
-    return response.data.available;
+  return null;
+};
+
+exports.checkDoctorAvailability = async ({ doctorId, date, time, token }) => {
+  const availabilities = await exports.fetchDoctorAvailabilities({
+    doctorId,
+    date,
+    token,
+  });
+
+  return Boolean(exports.findMatchingSlot(availabilities, date, time));
+};
+
+exports.bookDoctorSlot = async ({ availabilityId, slotIndex, appointmentId, token }) => {
+  const baseUrl = process.env.DOCTOR_SERVICE_URL;
+
+  if (!baseUrl) {
+    throw new Error("DOCTOR_SERVICE_URL is not configured");
   }
 
-  return false;
+  const endpointTemplate = process.env.DOCTOR_BOOK_SLOT_PATH || "/api/availability/:availabilityId/book";
+  const endpoint = endpointTemplate.replace(":availabilityId", availabilityId);
+
+  const response = await axios.put(
+    `${baseUrl}${endpoint}`,
+    { slotIndex, appointmentId },
+    {
+      headers: buildAuthHeaders(token),
+      timeout: 5000,
+    },
+  );
+
+  return response.data;
+};
+
+exports.releaseDoctorSlot = async ({ availabilityId, slotIndex, token }) => {
+  const baseUrl = process.env.DOCTOR_SERVICE_URL;
+
+  if (!baseUrl) {
+    throw new Error("DOCTOR_SERVICE_URL is not configured");
+  }
+
+  const endpointTemplate =
+    process.env.DOCTOR_RELEASE_SLOT_PATH || "/api/availability/:availabilityId/release";
+  const endpoint = endpointTemplate.replace(":availabilityId", availabilityId);
+
+  const response = await axios.put(
+    `${baseUrl}${endpoint}`,
+    { slotIndex },
+    {
+      headers: buildAuthHeaders(token),
+      timeout: 5000,
+    },
+  );
+
+  return response.data;
 };
