@@ -8,14 +8,15 @@ exports.createAppointment = async (req, res) => {
     const patientId = req.user.id;
 
     const token = req.headers.authorization?.split(" ")[1];
-    const isAvailable = await appointmentService.checkDoctorAvailability({
+    const availabilities = await appointmentService.fetchDoctorAvailabilities({
       doctorId,
       date,
-      time,
       token,
     });
 
-    if (!isAvailable) {
+    const slotRef = appointmentService.findMatchingSlot(availabilities, date, time);
+
+    if (!slotRef) {
       return res.status(409).json({
         success: false,
         message: "Selected slot is not available",
@@ -28,6 +29,33 @@ exports.createAppointment = async (req, res) => {
       date,
       time,
     });
+
+    try {
+      await appointmentService.bookDoctorSlot({
+        availabilityId: slotRef.availabilityId,
+        slotIndex: slotRef.slotIndex,
+        appointmentId: appointment._id,
+        token,
+      });
+    } catch (bookingError) {
+      await appointmentService.deleteById(appointment._id);
+
+      if (bookingError.response?.status === 400) {
+        return res.status(409).json({
+          success: false,
+          message: "Selected slot is not available",
+        });
+      }
+
+      if (bookingError.response || bookingError.code === "ECONNABORTED") {
+        return res.status(503).json({
+          success: false,
+          message: "Doctor service is unavailable",
+        });
+      }
+
+      throw bookingError;
+    }
 
     rabbitmqService.publishAppointmentCreated(appointment).catch((error) => {
       console.warn("Failed to publish appointment.created event:", error.message);
@@ -97,6 +125,7 @@ exports.updateAppointmentStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const token = req.headers.authorization?.split(" ")[1];
 
     const appointment = await appointmentService.findById(id);
 
@@ -126,6 +155,39 @@ exports.updateAppointmentStatus = async (req, res) => {
       });
     }
 
+    if (status === "cancelled") {
+      const availabilities = await appointmentService.fetchDoctorAvailabilities({
+        doctorId: appointment.doctorId,
+        date: appointment.date,
+        token,
+      });
+
+      const slotRef = appointmentService.findMatchingSlot(
+        availabilities,
+        appointment.date,
+        appointment.time,
+      );
+
+      if (slotRef) {
+        try {
+          await appointmentService.releaseDoctorSlot({
+            availabilityId: slotRef.availabilityId,
+            slotIndex: slotRef.slotIndex,
+            token,
+          });
+        } catch (releaseError) {
+          if (releaseError.response || releaseError.code === "ECONNABORTED") {
+            return res.status(503).json({
+              success: false,
+              message: "Doctor service is unavailable",
+            });
+          }
+
+          throw releaseError;
+        }
+      }
+    }
+
     appointment.status = status;
     await appointmentService.save(appointment);
 
@@ -146,6 +208,7 @@ exports.cancelAppointment = async (req, res) => {
   try {
     const { id } = req.params;
     const appointment = await appointmentService.findById(id);
+    const token = req.headers.authorization?.split(" ")[1];
 
     if (!appointment) {
       return res.status(404).json({
@@ -163,6 +226,37 @@ exports.cancelAppointment = async (req, res) => {
         success: false,
         message: "Access denied",
       });
+    }
+
+    const availabilities = await appointmentService.fetchDoctorAvailabilities({
+      doctorId: appointment.doctorId,
+      date: appointment.date,
+      token,
+    });
+
+    const slotRef = appointmentService.findMatchingSlot(
+      availabilities,
+      appointment.date,
+      appointment.time,
+    );
+
+    if (slotRef) {
+      try {
+        await appointmentService.releaseDoctorSlot({
+          availabilityId: slotRef.availabilityId,
+          slotIndex: slotRef.slotIndex,
+          token,
+        });
+      } catch (releaseError) {
+        if (releaseError.response || releaseError.code === "ECONNABORTED") {
+          return res.status(503).json({
+            success: false,
+            message: "Doctor service is unavailable",
+          });
+        }
+
+        throw releaseError;
+      }
     }
 
     appointment.status = "cancelled";
