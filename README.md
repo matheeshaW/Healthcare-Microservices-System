@@ -6,7 +6,7 @@ This repository contains a Node.js microservices setup for a healthcare system. 
 
 - api-gateway: reverse proxy + JWT check at gateway level.
 - patient-service: auth, patient profile, admin user listing, medical report upload/list.
-- appointment-service: scaffold only.
+- appointment-service: booking lifecycle, doctor availability integration, RabbitMQ event publish.
 - doctor-service: doctor profiles & verification, availability slot scheduling, prescription management, doctor search by specialization, soft delete support.
 - notification-service: scaffold only.
 - payment-service: scaffold only.
@@ -53,6 +53,23 @@ JWT_SECRET=supersecretkey
 PATIENT_SERVICE_URL=http://localhost:5001
 ```
 
+appointment-service/.env
+
+```
+PORT=5003
+MONGO_URI=your_mongodb_connection
+JWT_SECRET=supersecretkey
+
+DOCTOR_SERVICE_URL=http://localhost:5002
+DOCTOR_ME_PATH=/api/doctors/me
+DOCTOR_AVAILABILITY_PATH=/api/availability/doctor/:doctorId
+DOCTOR_BOOK_SLOT_PATH=/api/availability/:availabilityId/book
+DOCTOR_RELEASE_SLOT_PATH=/api/availability/:availabilityId/release
+
+RABBITMQ_URL=amqp://localhost
+APPOINTMENT_QUEUE_NAME=appointment.created
+```
+
 telemedicine-service/.env
 
 ```
@@ -72,7 +89,7 @@ MONGO_URI=your_mongodb_connection
 
 Notes:
 
-- JWT secrets must match between api-gateway, patient-service, and doctor-service.
+- JWT secrets must match between api-gateway, patient-service, doctor-service, and appointment-service.
 - The MongoDB database name is the URI segment before `?`.
 - Report upload depends on valid Cloudinary credentials.
 
@@ -86,6 +103,9 @@ cd ../patient-service
 npm install
 
 cd ../doctor-service
+npm install
+
+cd ../appointment-service
 npm install
 
 cd ../frontend
@@ -115,7 +135,14 @@ cd doctor-service
 npm run dev
 ```
 
-Terminal 4 (frontend)
+Terminal 4 (appointment-service)
+
+```
+cd appointment-service
+npm run dev
+```
+
+Terminal 5 (frontend)
 
 ```
 cd frontend
@@ -491,7 +518,201 @@ Success response example:
 }
 ```
 
-### 8) Create Telemedicine Session (Doctor/Patient)
+### 8) Appointment Service Details
+
+The appointment-service owns the full appointment lifecycle. It creates bookings, checks doctor availability, publishes an event when a booking is created, and lets doctors/admins update appointment state.
+
+#### Responsibilities
+
+- Create appointments only when the selected doctor slot is free.
+- Keep appointment records in MongoDB.
+- Fetch doctor profile and availability from the doctor-service.
+- Release slots when an appointment is cancelled.
+- Publish an `appointment.created` event to RabbitMQ after a successful booking.
+
+#### Data Model
+
+Appointment fields:
+- `patientId` (string, required)
+- `doctorId` (string, required)
+- `date` (Date, required)
+- `time` (string, required)
+- `status` (`pending | confirmed | cancelled | completed`, default `pending`)
+- `paymentStatus` (`pending | paid`, default `pending`)
+
+#### Validation Rules
+
+- Create appointment requires: `doctorId`, `date`, `time`
+- Status update allows only: `pending`, `confirmed`, `cancelled`, `completed`
+- Invalid input returns `400` with a validation message
+- Route-level middleware handles validation before the controller runs
+
+#### Upstream Integrations
+
+- Doctor service is used to:
+  - resolve current doctor profile (`/api/doctors/me`)
+  - fetch availability by doctor/date
+  - book a slot on appointment create
+  - release a slot on cancellation flows
+- RabbitMQ publish:
+  - queue: `appointment.created` (or `APPOINTMENT_QUEUE_NAME` override)
+  - event payload includes appointment id, patient/doctor ids, date, time, status, paymentStatus, and timestamp
+
+#### Error Mapping
+
+- `400`: invalid input or invalid status
+- `401`: missing/invalid JWT
+- `403`: access denied by role checks
+- `404`: appointment not found
+- `409`: selected slot already taken
+- `503`: doctor-service connectivity/timeout/unavailable
+- `500`: internal server errors
+
+#### Appointment Endpoints
+
+1. Create appointment (patient)
+
+`POST /api/appointments`
+
+Headers:
+
+```
+Authorization: Bearer <patient_jwt>
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "doctorId": "67f0a0b0c0d0e0f001122334",
+  "date": "2026-04-20",
+  "time": "10:30"
+}
+```
+
+Success response:
+
+```json
+{
+  "success": true,
+  "message": "Appointment created successfully",
+  "data": {
+    "_id": "69f2e3a12b8c8c18a93e1def",
+    "patientId": "69c2c7333e71f94bcc176751",
+    "doctorId": "67f0a0b0c0d0e0f001122334",
+    "date": "2026-04-20T00:00:00.000Z",
+    "time": "10:30",
+    "status": "pending",
+    "paymentStatus": "pending"
+  }
+}
+```
+
+Common failures:
+
+- `400` if `doctorId`, `date`, or `time` is missing
+- `409` if the requested slot is no longer available
+- `503` if the doctor-service cannot be reached
+
+2. Get my appointments (patient)
+
+`GET /api/appointments/my`
+
+Success response:
+
+```json
+{
+  "success": true,
+  "message": "Patient appointments fetched",
+  "data": []
+}
+```
+
+3. Get doctor appointments (doctor)
+
+`GET /api/appointments/doctor`
+
+Success response:
+
+```json
+{
+  "success": true,
+  "message": "Doctor appointments fetched",
+  "data": []
+}
+```
+
+4. Get all appointments (admin)
+
+`GET /api/appointments/admin/all`
+
+Success response:
+
+```json
+{
+  "success": true,
+  "message": "All appointments fetched",
+  "data": []
+}
+```
+
+5. Update appointment status (doctor/admin)
+
+`PUT /api/appointments/:id/status`
+
+Headers:
+
+```
+Authorization: Bearer <doctor_or_admin_jwt>
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "status": "confirmed"
+}
+```
+
+Success response:
+
+```json
+{
+  "success": true,
+  "message": "Appointment status updated",
+  "data": {
+    "_id": "69f2e3a12b8c8c18a93e1def",
+    "status": "confirmed"
+  }
+}
+```
+
+6. Cancel appointment (patient/admin)
+
+`DELETE /api/appointments/:id`
+
+Success response:
+
+```json
+{
+  "success": true,
+  "message": "Appointment cancelled",
+  "data": {
+    "_id": "69f2e3a12b8c8c18a93e1def",
+    "status": "cancelled"
+  }
+}
+```
+
+#### Implementation Notes
+
+- The service starts only after MongoDB connects successfully.
+- Appointment creation publishes a RabbitMQ event asynchronously so the API response is not blocked by downstream consumers.
+- Doctor-service connectivity failures are mapped to `503` so clients can retry.
+
+### 9) Create Telemedicine Session (Doctor/Patient)
 
 Endpoint:
 `POST /api/telemedicine/create`
@@ -540,7 +761,7 @@ Error response examples:
 }
 ```
 
-### 9) Get Meeting Link
+### 10) Get Meeting Link
 
 Endpoint:
 `GET /api/telemedicine/session/:appointmentId`
@@ -562,7 +783,7 @@ Success response example:
 }
 ```
 
-### 10) Process Payment
+### 11) Process Payment
 
 Endpoint:
 `POST /api/payment/process`
@@ -622,7 +843,7 @@ Error response examples:
 }
 ```
 
-### 11) Create Doctor Profile
+### 12) Create Doctor Profile
 
 Endpoint:
 `POST /api/doctors`
@@ -665,7 +886,7 @@ Error response examples:
 }
 ```
 
-### 12) Get My Doctor Profile
+### 13) Get My Doctor Profile
 
 Endpoint:
 `GET /api/doctors/me`
@@ -710,7 +931,7 @@ Not found (404):
 }
 ```
 
-### 13) Get Doctor Profile by ID
+### 14) Get Doctor Profile by ID
 
 Endpoint:
 `GET /api/doctors/:id`
@@ -746,7 +967,7 @@ Success response example:
 }
 ```
 
-### 14) Search Doctors by Specialization
+### 15) Search Doctors by Specialization
 
 Endpoint:
 `GET /api/doctors/search?specialization=Cardiology&verified=true`
@@ -782,7 +1003,7 @@ Success response example:
 }
 ```
 
-### 15) Update Doctor Profile
+### 16) Update Doctor Profile
 
 Endpoint:
 `PUT /api/doctors/:id`
@@ -834,7 +1055,7 @@ Error response examples:
 }
 ```
 
-### 16) Verify Doctor (Admin Only)
+### 17) Verify Doctor (Admin Only)
 
 Endpoint:
 `PUT /api/doctors/:id/verify`
@@ -870,7 +1091,7 @@ Forbidden (403):
 }
 ```
 
-### 17) Get All Doctors (Admin Only)
+### 18) Get All Doctors (Admin Only)
 
 Endpoint:
 `GET /api/doctors/all?includeDeleted=false`
@@ -906,7 +1127,7 @@ Success response example:
 }
 ```
 
-### 18) Delete Doctor Profile (Soft Delete)
+### 19) Delete Doctor Profile (Soft Delete)
 
 Endpoint:
 `DELETE /api/doctors/:id`
@@ -926,7 +1147,7 @@ Success response (200):
 }
 ```
 
-### 19) Create Availability Slots
+### 20) Create Availability Slots
 
 Endpoint:
 `POST /api/availability`
@@ -991,7 +1212,7 @@ Error response (400):
 }
 ```
 
-### 20) Get My Availability
+### 21) Get My Availability
 
 Endpoint:
 `GET /api/availability/me?fromDate=2026-04-15&toDate=2026-04-20`
@@ -1038,7 +1259,7 @@ Success response (200):
 }
 ```
 
-### 21) Get Doctor Availability by ID
+### 22) Get Doctor Availability by ID
 
 Endpoint:
 `GET /api/availability/doctor/:doctorId?fromDate=2026-04-15&toDate=2026-04-20`
@@ -1084,7 +1305,7 @@ Success response (200):
 }
 ```
 
-### 22) Update Availability Slots
+### 23) Update Availability Slots
 
 Endpoint:
 `PUT /api/availability/:id`
@@ -1134,7 +1355,7 @@ Success response (200):
 }
 ```
 
-### 23) Book Slot (Internal - Appointment Service)
+### 24) Book Slot (Internal - Appointment Service)
 
 Endpoint:
 `PUT /api/availability/:id/book`
@@ -1174,7 +1395,7 @@ Success response (200):
 }
 ```
 
-### 24) Release Slot (Appointment Cancelled)
+### 25) Release Slot (Appointment Cancelled)
 
 Endpoint:
 `PUT /api/availability/:id/release`
@@ -1212,7 +1433,7 @@ Success response (200):
 }
 ```
 
-### 25) Issue Prescription
+### 26) Issue Prescription
 
 Endpoint:
 `POST /api/prescriptions`
@@ -1301,7 +1522,7 @@ Error response (400):
 }
 ```
 
-### 26) Get My Prescriptions (Doctor)
+### 27) Get My Prescriptions (Doctor)
 
 Endpoint:
 `GET /api/prescriptions/me`
@@ -1346,7 +1567,7 @@ Success response (200):
 }
 ```
 
-### 27) Get Patient's Prescriptions
+### 28) Get Patient's Prescriptions
 
 Endpoint:
 `GET /api/prescriptions/patient/:patientId`
@@ -1391,7 +1612,7 @@ Success response (200):
 }
 ```
 
-### 28) Get Single Prescription by ID
+### 29) Get Single Prescription by ID
 
 Endpoint:
 `GET /api/prescriptions/:id`
@@ -1432,7 +1653,7 @@ Success response (200):
 }
 ```
 
-### 29) Update Prescription Status
+### 30) Update Prescription Status
 
 Endpoint:
 `PUT /api/prescriptions/:id/status`
@@ -1472,7 +1693,7 @@ Success response (200):
 }
 ```
 
-### 30) Edit Prescription
+### 31) Edit Prescription
 
 Endpoint:
 `PUT /api/prescriptions/:id`
@@ -1533,7 +1754,7 @@ Error response (400):
 }
 ```
 
-### 31) Health Check
+### 32) Health Check
 
 Endpoint:
 `GET /health` (No auth required)
