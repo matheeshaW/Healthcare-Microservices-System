@@ -1,6 +1,6 @@
 ## Healthcare Microservices System
 
-This repository contains a Node.js microservices setup for a healthcare system. The patient service, doctor service, and API gateway are currently implemented and connected.
+This repository contains a Node.js microservices setup for a healthcare system. The patient service and API gateway are currently implemented and connected. The doctor service is implemented, but it is not yet wired through the API gateway.
 
 ### Services (current)
 
@@ -72,7 +72,7 @@ MONGO_URI=your_mongodb_connection
 
 Notes:
 
-- JWT secrets must match between gateway and patient-service.
+- JWT secrets must match between api-gateway, patient-service, and doctor-service.
 - The MongoDB database name is the URI segment before `?`.
 - Report upload depends on valid Cloudinary credentials.
 
@@ -148,13 +148,13 @@ Authorization: Bearer <jwt_token>
 
 ### Route summary
 
-Public:
+**Public (no authentication required):**
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
-- `GET /health` (health check - no auth required)
+- `GET /health` (health check)
 
-Protected (patient role):
+**Authenticated - Any User (JWT required, no role check):**
 
 - `GET /api/patient/profile`
 - `POST /api/patient/profile`
@@ -164,21 +164,21 @@ Protected (patient role):
 - `GET /api/availability/doctor/:doctorId` (view doctor availability)
 - `GET /api/prescriptions/patient/:patientId` (view patient prescriptions)
 
-Protected (doctor role):
+**Authenticated - Verified Doctor Only (JWT + verified doctor profile required):**
 
-- `POST /api/doctors` (create doctor profile)
+- `POST /api/doctors` (create doctor profile - returns unverified)
 - `GET /api/doctors/me` (get own profile)
 - `GET /api/doctors/:id` (view doctor profile)
 - `PUT /api/doctors/:id` (update own profile)
-- `POST /api/availability` (create availability slots)
-- `GET /api/availability/me` (get own availability)
+- `POST /api/availability` (create availability slots - doctor must be verified)
+- `GET /api/availability/me` (get own availability - doctor must be verified)
 - `PUT /api/availability/:id` (update availability)
-- `GET /api/prescriptions/me` (get own prescriptions)
-- `POST /api/prescriptions` (issue prescription)
+- `GET /api/prescriptions/me` (get own prescriptions - doctor must be verified)
+- `POST /api/prescriptions` (issue prescription - doctor must be verified)
 - `PUT /api/prescriptions/:id` (edit prescription)
 - `PUT /api/prescriptions/:id/status` (update prescription status)
 
-Protected (admin role):
+**Authenticated - Admin Only (JWT + `role: admin` required):**
 
 - `GET /api/admin/users` (list all users)
 - `GET /api/doctors/all` (list all doctors)
@@ -922,7 +922,7 @@ Success response (200):
 ```json
 {
   "success": true,
-  "message": "Doctor profile soft deleted successfully."
+  "message": "Doctor profile deleted successfully."
 }
 ```
 
@@ -1049,9 +1049,12 @@ Headers:
 Authorization: Bearer <jwt>
 ```
 
-Query Parameters:
+Path Parameters:
 
 - `doctorId`: The doctor's ID from the Doctor profile
+
+Query Parameters:
+
 - `fromDate` (optional): Filter from this date
 - `toDate` (optional): Filter till this date
 
