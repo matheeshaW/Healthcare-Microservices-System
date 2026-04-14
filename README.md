@@ -29,6 +29,8 @@ PORT=5000
 JWT_SECRET=supersecretkey
 PATIENT_SERVICE_URL=http://localhost:5001
 APPOINTMENT_SERVICE_URL=http://localhost:5003
+TELEMEDICINE_SERVICE_URL=http://localhost:5006
+PAYMENT_SERVICE_URL=http://localhost:5005
 ```
 
 patient-service/.env
@@ -41,6 +43,24 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 ```
+
+telemedicine-service/.env
+
+```
+PORT=5006
+RABBITMQ_URL=amqp://localhost
+MONGO_URI=your_mongodb_connection
+JITSI_BASE_URL=https://meet.jit.si
+```
+
+payment-service/.env
+
+```
+PORT=5005
+RABBITMQ_URL=amqp://localhost
+MONGO_URI=your_mongodb_connection
+```
+
 
 Notes:
 - JWT secrets must match between gateway and patient-service.
@@ -549,7 +569,15 @@ Error response examples:
 	"message": "Insufficient funds or card declined"
 }
 ```
+## Event-Driven Architecture (RabbitMQ)
 
+To ensure high performance and reliability, this system uses RabbitMQ for "Fire and Forget" communication:
+
+- Trigger: When a Payment is successful, the Payment Service sends a message to the payment.success queue.
+
+- Action: The Notification Service (which is always listening) picks up that message and sends an email receipt to the patient.
+
+- Benefit: This keeps the app fast because the user doesn't have to wait for the email server to finish before they see their payment confirmation.
 
 
 
