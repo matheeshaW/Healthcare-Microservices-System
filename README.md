@@ -425,6 +425,135 @@ Success response example:
 }
 ```
 
+### 8) Create Telemedicine Session (Doctor/Patient)
+
+Endpoint:
+`POST /api/telemedicine/create`
+
+Headers:
+
+```
+Authorization: Bearer <jwt>
+```
+
+Request body (JSON):
+
+```json
+{
+    "appointmentId": "APP123",
+    "doctorId": "DOC456",
+    "patientId": "PAT789",
+    "startTime": "2026-04-15T10:00:00Z"
+}
+```
+Success response example:
+
+```json
+{
+    "success": true,
+    "data": {
+        "meetingLink": "https://meet.jit.si/Healthcare_App_uniqueID",
+        "appointmentId": "APP123",
+        "status": "active"
+    }
+}
+```
+Error response examples:
+
+```json
+{
+	"message": "Missing required IDs"
+}
+```
+
+```json
+{
+	"message": "Invalid startTime format"
+}
+```
+### 9) Get Meeting Link
+
+Endpoint:
+`GET /api/telemedicine/session/:appointmentId`
+
+Headers:
+
+```
+Authorization: Bearer <jwt>
+```
+
+Success response example:
+
+```json
+{
+    "success": true,
+    "data": {
+        "meetingLink": "https://meet.jit.si/Healthcare_App_uniqueID"
+    }
+}
+```
+
+### 10) Process Payment
+
+Endpoint:
+`POST /api/payment/process`
+
+Headers:
+
+```
+Authorization: Bearer <jwt>
+```
+
+Request body (JSON):
+
+```json
+{
+    "appointmentId": "APP123",
+    "amount": 2500,
+    "method": "card"
+}
+```
+Success response example:
+
+```json
+{
+    "success": true,
+    "message": "Payment processed successfully",
+    "data": {
+        "_id": "69f2e3a12b8c8c18a93e1def",
+        "appointmentId": "APP123",
+        "patientId": "69c2c7333e71f94bcc176751",
+        "amount": 2500,
+        "method": "card",
+        "status": "success",
+        "transactionId": "TXN_77889900",
+        "createdAt": "2026-04-14T10:15:00.000Z"
+    }
+}
+```
+Error response examples:
+
+```json
+{
+	"message": "Missing required payment details"
+}
+```
+
+```json
+{
+	"message": "Invalid payment amount"
+}
+```
+```json
+{
+	"message": "Insufficient funds or card declined"
+}
+```
+
+
+
+
+
 ## Gateway vs Direct Service Behavior
 
 - Response body shape for successful requests is effectively the same.
