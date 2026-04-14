@@ -1,23 +1,24 @@
 ## Healthcare Microservices System
 
-This repository contains a set of Node.js microservices for a healthcare system. The patient service and API gateway are currently wired and working; other services are scaffolded but not yet documented.
+This repository contains a Node.js microservices setup for a healthcare system. The patient service and API gateway are currently implemented and connected.
 
 ### Services (current)
 
-- api-gateway: reverse proxy + auth guard for downstream services.
-- patient-service: auth, patient profile, admin user listing.
+- api-gateway: reverse proxy + JWT check at gateway level.
+- patient-service: auth, patient profile, admin user listing, medical report upload/list.
 - appointment-service: scaffold only.
 - doctor-service: scaffold only.
 - notification-service: scaffold only.
 - payment-service: scaffold only.
 - telemedicine-service: scaffold only.
-- frontend: scaffold only.
+- frontend: React + Vite + Tailwind.
 - k8s: placeholder for Kubernetes manifests.
 
 ### Prerequisites
 
-- Node.js 18+ (or 20+ recommended)
+- Node.js >=20.19.0 (npm >=9.0.0)
 - MongoDB (Atlas or local)
+- Cloudinary account (for medical report uploads)
 
 ### Environment variables
 
@@ -27,6 +28,7 @@ api-gateway/.env
 PORT=5000
 JWT_SECRET=supersecretkey
 PATIENT_SERVICE_URL=http://localhost:5001
+APPOINTMENT_SERVICE_URL=http://localhost:5003
 ```
 
 patient-service/.env
@@ -35,11 +37,15 @@ patient-service/.env
 PORT=5001
 MONGO_URI=your_mongodb_connection
 JWT_SECRET=supersecretkey
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 Notes:
 - JWT secrets must match between gateway and patient-service.
-- The MongoDB database name is the last segment in the URI (before the ?).
+- The MongoDB database name is the URI segment before `?`.
+- Report upload depends on valid Cloudinary credentials.
 
 ### Install dependencies
 
@@ -49,15 +55,18 @@ npm install
 
 cd ../patient-service
 npm install
+
+cd ../frontend
+npm install
 ```
 
-### Run services (local)
+### Run services locally
 
 Terminal 1 (patient-service)
 
 ```
 cd patient-service
-npx nodemon src/server.js
+npm run dev
 ```
 
 Terminal 2 (api-gateway)
@@ -67,38 +76,59 @@ cd api-gateway
 node server.js
 ```
 
-### API Gateway routes
-
-Base URL: http://localhost:5000
-
-Public (no auth):
-
-- POST /api/auth/register
-- POST /api/auth/login
-
-Protected (Bearer token required):
-
-- GET /api/patient/profile
-- POST /api/patient/profile
-- GET /api/admin/users
-
-### Patient Service routes (direct)
-
-Base URL: http://localhost:5001
-
-- POST /api/auth/register
-- POST /api/auth/login
-- GET /api/patient/profile (Bearer token)
-- POST /api/patient/profile (Bearer token)
-- GET /api/admin/users (Bearer token, admin role)
-
-### Request/response examples
-
-Register
-
-POST http://localhost:5000/api/auth/register
+Terminal 3 (frontend)
 
 ```
+cd frontend
+npm run dev
+```
+
+## API Reference
+
+### Base URLs
+
+- API Gateway: `http://localhost:5000`
+- Patient Service direct: `http://localhost:5001`
+
+Yes, the exposed endpoint paths are the same through both services; only the host/port changes.
+
+Example:
+- Gateway login: `POST http://localhost:5000/api/auth/login`
+- Direct login: `POST http://localhost:5001/api/auth/login`
+
+### Authentication header format
+
+Use this header for protected endpoints:
+
+```
+Authorization: Bearer <jwt_token>
+```
+
+### Route summary
+
+Public:
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+
+Protected (patient role):
+- `GET /api/patient/profile`
+- `POST /api/patient/profile`
+- `GET /api/reports`
+- `POST /api/reports/upload` (multipart form-data)
+
+Protected (admin role):
+- `GET /api/admin/users`
+
+## Detailed Endpoints (Request/Response)
+
+### 1) Register user
+
+Endpoint:
+`POST /api/auth/register`
+
+Request body (JSON):
+
+```json
 {
 	"name": "patient02",
 	"email": "patient2@health.com",
@@ -106,55 +136,92 @@ POST http://localhost:5000/api/auth/register
 }
 ```
 
-Login
+Success response example:
 
-POST http://localhost:5000/api/auth/login
-
+```json
+{
+	"success": true,
+	"user": {
+		"_id": "69c2c7333e71f94bcc176751",
+		"name": "patient02",
+		"email": "patient2@health.com",
+		"password": "$2b$10$...hashed...",
+		"role": "patient",
+		"createdAt": "2026-04-11T10:00:00.000Z",
+		"__v": 0
+	}
+}
 ```
+
+Error response example:
+
+```json
+{
+	"error": "E11000 duplicate key error collection: ... dup key: { email: \"patient2@health.com\" }"
+}
+```
+
+### 2) Login user
+
+Endpoint:
+`POST /api/auth/login`
+
+Request body (JSON):
+
+```json
 {
 	"email": "patient2@health.com",
 	"password": "336699vv"
 }
 ```
 
-Response (example)
+Success response example:
 
-```
+```json
 {
 	"success": true,
 	"token": "<jwt>",
 	"user": {
-		"_id": "...",
+		"_id": "69c2c7333e71f94bcc176751",
 		"name": "patient02",
 		"email": "patient2@health.com",
-		"role": "patient"
+		"password": "$2b$10$...hashed...",
+		"role": "patient",
+		"createdAt": "2026-04-11T10:00:00.000Z",
+		"__v": 0
 	}
 }
 ```
 
-Get patient profile
+Error response examples:
 
-GET http://localhost:5000/api/patient/profile
-
-Headers
-
-```
-Authorization: Bearer <jwt>
+```json
+{
+	"message": "User not found"
+}
 ```
 
-Update patient profile
-
-POST http://localhost:5000/api/patient/profile
-
-Headers
-
-```
-Authorization: Bearer <jwt>
+```json
+{
+	"message": "Invalid credentials"
+}
 ```
 
-Body
+### 3) Create or update patient profile
+
+Endpoint:
+`POST /api/patient/profile`
+
+Headers:
 
 ```
+Authorization: Bearer <patient_jwt>
+Content-Type: application/json
+```
+
+Request body (JSON):
+
+```json
 {
 	"age": 26,
 	"gender": "female",
@@ -164,16 +231,220 @@ Body
 }
 ```
 
-Admin: list users
+Success response example:
 
-GET http://localhost:5000/api/admin/users
+```json
+{
+	"success": true,
+	"data": {
+		"_id": "69d9f0a44b7f7f18a73e9abc",
+		"userId": "69c2c7333e71f94bcc176751",
+		"age": 26,
+		"gender": "female",
+		"address": "Colombo",
+		"medicalHistory": ["asthma"],
+		"allergies": ["penicillin"],
+		"createdAt": "2026-04-11T10:05:00.000Z",
+		"updatedAt": "2026-04-11T10:05:00.000Z"
+	}
+}
+```
 
-Headers
+Error response examples:
+
+```json
+{
+	"message": "No token"
+}
+```
+
+```json
+{
+	"message": "No token provided"
+}
+```
+
+```json
+{
+	"message": "Invalid token"
+}
+```
+
+```json
+{
+	"message": "Access denied: insufficient permissions"
+}
+```
+
+### 4) Get patient profile
+
+Endpoint:
+`GET /api/patient/profile`
+
+Headers:
 
 ```
-Authorization: Bearer <admin-jwt>
+Authorization: Bearer <patient_jwt>
 ```
 
-Notes:
-- New users default to role "patient".
-- To test admin routes, create/update a user in MongoDB with role "admin" and log in to get an admin token.
+Success response example:
+
+```json
+{
+	"success": true,
+	"data": {
+		"_id": "69d9f0a44b7f7f18a73e9abc",
+		"userId": "69c2c7333e71f94bcc176751",
+		"age": 26,
+		"gender": "female",
+		"address": "Colombo",
+		"medicalHistory": ["asthma"],
+		"allergies": ["penicillin"],
+		"createdAt": "2026-04-11T10:05:00.000Z",
+		"updatedAt": "2026-04-11T10:05:00.000Z"
+	}
+}
+```
+
+Not found example:
+
+```json
+{
+	"message": "Profile not found"
+}
+```
+
+### 5) Get all users (admin)
+
+Endpoint:
+`GET /api/admin/users`
+
+Headers:
+
+```
+Authorization: Bearer <admin_jwt>
+```
+
+Success response example:
+
+```json
+{
+	"success": true,
+	"data": [
+		{
+			"_id": "69c2c7333e71f94bcc176751",
+			"name": "patient02",
+			"email": "patient2@health.com",
+			"password": "$2b$10$...hashed...",
+			"role": "patient",
+			"createdAt": "2026-04-11T10:00:00.000Z",
+			"__v": 0
+		}
+	]
+}
+```
+
+Forbidden example:
+
+```json
+{
+	"message": "Access denied: insufficient permissions"
+}
+```
+
+### 6) Upload medical report (patient)
+
+Endpoint:
+`POST /api/reports/upload`
+
+Headers:
+
+```
+Authorization: Bearer <patient_jwt>
+Content-Type: multipart/form-data
+```
+
+Request body (form-data):
+- key: `file`
+- value: choose a file (jpg, jpeg, png, pdf)
+
+Success response example:
+
+```json
+{
+	"success": true,
+	"data": {
+		"patientId": "69c2c7333e71f94bcc176751",
+		"fileUrl": "https://res.cloudinary.com/.../medical_reports/abc123.pdf",
+		"publicId": "medical_reports/abc123",
+		"originalName": "report.pdf",
+		"_id": "69da0a9a42139d1589ba3b3e",
+		"createdAt": "2026-04-11T10:10:00.000Z",
+		"updatedAt": "2026-04-11T10:10:00.000Z"
+	}
+}
+```
+
+Error response example:
+
+```json
+{
+	"error": "Cannot read properties of undefined (reading 'path')"
+}
+```
+
+This can occur when `file` was not sent in form-data.
+
+### 7) Get current patient's reports
+
+Endpoint:
+`GET /api/reports`
+
+Headers:
+
+```
+Authorization: Bearer <patient_jwt>
+```
+
+Success response example:
+
+```json
+{
+	"success": true,
+	"data": [
+		{
+			"_id": "69da0942dde1888a2d5781e3",
+			"patientId": "69c2c7333e71f94bcc176751",
+			"fileUrl": "https://res.cloudinary.com/.../medical_reports/sgmf9ej66iitdfvz4xll.pdf",
+			"publicId": "medical_reports/sgmf9ej66iitdfvz4xll",
+			"originalName": "Sample-filled-in-MR.pdf",
+			"createdAt": "2026-04-11T08:41:38.852Z",
+			"updatedAt": "2026-04-11T08:41:38.852Z"
+		}
+	]
+}
+```
+
+## Gateway vs Direct Service Behavior
+
+- Response body shape for successful requests is effectively the same.
+- Path names are the same.
+- The difference is where JWT is checked first:
+	- via gateway: gateway checks token before forwarding.
+	- direct patient-service: patient-service middleware checks token.
+- Because of that, auth error messages can differ slightly (for example `No token` vs `No token provided`).
+
+## Quick test flow (recommended)
+
+1. Register: `POST /api/auth/register`
+2. Login: `POST /api/auth/login` and copy token
+3. Create profile: `POST /api/patient/profile` with bearer token
+4. Upload report: `POST /api/reports/upload` with bearer token + form-data `file`
+5. List reports: `GET /api/reports` with bearer token
+6. Admin test: use admin token for `GET /api/admin/users`
+
+## Notes
+
+- New users default to role `patient`.
+- To test admin routes, set a user role to `admin` in MongoDB and login with that user.
+- Current auth register/login responses include hashed password in `user`; in production this should be omitted.
