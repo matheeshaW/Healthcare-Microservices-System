@@ -48,6 +48,18 @@ app.use("/api/admin", authenticate, createProxyMiddleware({
   pathRewrite: (path) => `/api/admin${path}`
 }));
 
+app.use("/api/reports", authenticate, createProxyMiddleware({
+  target: process.env.PATIENT_SERVICE_URL,
+  changeOrigin: true,
+  pathRewrite: (path) => `/api/reports${path}`
+}));
+
+app.use("/api/appointments", authenticate, createProxyMiddleware({
+  target: process.env.APPOINTMENT_SERVICE_URL,
+  changeOrigin: true,
+  pathRewrite: (path) => `/api/appointments${path}`
+}));
+
 /* ================= START ================= */
 app.listen(process.env.PORT, () => {
   console.log(`API Gateway running on port ${process.env.PORT}`);
