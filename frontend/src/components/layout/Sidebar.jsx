@@ -13,13 +13,13 @@ function Sidebar() {
         </li>
 
         <li>
-          <Link to="/profile" className="block p-2 hover:bg-gray-700">
+          <Link to="/patient/profile" className="block p-2 hover:bg-gray-700">
             Profile
           </Link>
         </li>
 
         <li>
-          <Link to="/reports" className="block p-2 hover:bg-gray-700">
+          <Link to="/patient/reports" className="block p-2 hover:bg-gray-700">
             Reports
           </Link>
         </li>
