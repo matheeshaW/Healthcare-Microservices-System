@@ -11,9 +11,10 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/patient", require("./routes/patientRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/auth", require("./src/routes/authRoutes"));
+app.use("/api/patient", require("./src/routes/patientRoutes"));
+app.use("/api/admin", require("./src/routes/adminRoutes"));
+app.use("/api/reports", require("./src/routes/reportRoutes"));
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
