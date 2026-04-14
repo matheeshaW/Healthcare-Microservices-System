@@ -425,6 +425,78 @@ Success response example:
 }
 ```
 
+### 8) Create Telemedicine Session (Doctor/Patient)
+
+Endpoint:
+`POST /api/telemedicine/create`
+
+Headers:
+
+```
+Authorization: Bearer <jwt>
+```
+
+Request body (JSON):
+
+```json
+{
+    "appointmentId": "APP123",
+    "doctorId": "DOC456",
+    "patientId": "PAT789",
+    "startTime": "2026-04-15T10:00:00Z"
+}
+```
+Success response example:
+
+```json
+{
+    "success": true,
+    "data": {
+        "meetingLink": "https://meet.jit.si/Healthcare_App_uniqueID",
+        "appointmentId": "APP123",
+        "status": "active"
+    }
+}
+```
+Error response examples:
+
+```json
+{
+	"message": "Missing required IDs"
+}
+```
+
+```json
+{
+	"message": "Invalid startTime format"
+}
+```
+### 9) Get Meeting Link
+
+Endpoint:
+`GET /api/telemedicine/session/:appointmentId`
+
+Headers:
+
+```
+Authorization: Bearer <jwt>
+```
+
+Success response example:
+
+```json
+{
+    "success": true,
+    "data": {
+        "meetingLink": "https://meet.jit.si/Healthcare_App_uniqueID"
+    }
+}
+```
+
+
+
+
+
 ## Gateway vs Direct Service Behavior
 
 - Response body shape for successful requests is effectively the same.

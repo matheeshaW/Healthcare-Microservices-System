@@ -48,6 +48,15 @@ app.use("/api/admin", authenticate, createProxyMiddleware({
   pathRewrite: (path) => `/api/admin${path}`
 }));
 
+// Telemedicine Service Route
+app.use("/api/telemedicine", authenticate, createProxyMiddleware({
+  target: process.env.TELEMEDICINE_SERVICE_URL,
+  changeOrigin: true,
+  pathRewrite: (path) => `/api/telemedicine${path}`,
+  onError: (err, req, res) => {
+      console.error('Gateway Error: Telemedicine Service unreachable.', err.message);
+      res.status(502).json({ success: false, error: 'Telemedicine Service offline.' });
+  }
 app.use("/api/reports", authenticate, createProxyMiddleware({
   target: process.env.PATIENT_SERVICE_URL,
   changeOrigin: true,
