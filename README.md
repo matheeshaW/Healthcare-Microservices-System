@@ -6,7 +6,7 @@ This repository contains a Node.js microservices setup for a healthcare system. 
 
 - api-gateway: reverse proxy + JWT check at gateway level.
 - patient-service: auth, patient profile, admin user listing, medical report upload/list.
-- appointment-service: implemented (booking lifecycle, doctor availability integration, RabbitMQ event publish).
+- appointment-service: scaffold only.
 - doctor-service: scaffold only.
 - notification-service: scaffold only.
 - payment-service: scaffold only.
@@ -44,23 +44,6 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-appointment-service/.env
-
-```
-PORT=5003
-MONGO_URI=your_mongodb_connection
-JWT_SECRET=supersecretkey
-
-DOCTOR_SERVICE_URL=http://localhost:5002
-DOCTOR_ME_PATH=/api/doctors/me
-DOCTOR_AVAILABILITY_PATH=/api/availability/doctor/:doctorId
-DOCTOR_BOOK_SLOT_PATH=/api/availability/:availabilityId/book
-DOCTOR_RELEASE_SLOT_PATH=/api/availability/:availabilityId/release
-
-RABBITMQ_URL=amqp://localhost
-APPOINTMENT_QUEUE_NAME=appointment.created
-```
-
 telemedicine-service/.env
 
 ```
@@ -81,7 +64,6 @@ MONGO_URI=your_mongodb_connection
 
 Notes:
 - JWT secrets must match between gateway and patient-service.
-- JWT secrets should also match appointment-service when requests are proxied with bearer tokens.
 - The MongoDB database name is the URI segment before `?`.
 - Report upload depends on valid Cloudinary credentials.
 
@@ -92,9 +74,6 @@ cd api-gateway
 npm install
 
 cd ../patient-service
-npm install
-
-cd ../appointment-service
 npm install
 
 cd ../frontend
@@ -117,14 +96,7 @@ cd api-gateway
 node server.js
 ```
 
-Terminal 3 (appointment-service)
-
-```
-cd appointment-service
-npm run dev
-```
-
-Terminal 4 (frontend)
+Terminal 3 (frontend)
 
 ```
 cd frontend
@@ -137,7 +109,6 @@ npm run dev
 
 - API Gateway: `http://localhost:5000`
 - Patient Service direct: `http://localhost:5001`
-- Appointment Service direct: `http://localhost:5003`
 
 Yes, the exposed endpoint paths are the same through both services; only the host/port changes.
 
@@ -167,14 +138,6 @@ Protected (patient role):
 
 Protected (admin role):
 - `GET /api/admin/users`
-
-Protected (appointment role-based):
-- `POST /api/appointments` (patient)
-- `GET /api/appointments/my` (patient)
-- `GET /api/appointments/doctor` (doctor)
-- `GET /api/appointments/admin/all` (admin)
-- `PUT /api/appointments/:id/status` (doctor, admin)
-- `DELETE /api/appointments/:id` (patient, admin)
 
 ## Detailed Endpoints (Request/Response)
 
@@ -481,92 +444,6 @@ Success response example:
 	]
 }
 ```
-
-## Appointment Service Details
-
-### Data Model
-
-Appointment fields:
-- `patientId` (string, required)
-- `doctorId` (string, required)
-- `date` (Date, required)
-- `time` (string, required)
-- `status` (`pending | confirmed | cancelled | completed`, default `pending`)
-- `paymentStatus` (`pending | paid`, default `pending`)
-
-### Validation Rules
-
-- Create appointment requires: `doctorId`, `date`, `time`
-- Status update allows only: `pending`, `confirmed`, `cancelled`, `completed`
-- Invalid input returns `400` with validation message
-
-### Upstream Integrations
-
-- Doctor service is used to:
-	- resolve current doctor profile (`/api/doctors/me`)
-	- fetch availability by doctor/date
-	- book a slot on appointment create
-	- release a slot on cancellation flows
-- RabbitMQ publish:
-	- queue: `appointment.created` (or `APPOINTMENT_QUEUE_NAME` override)
-	- event payload includes appointment ids, date/time, status, paymentStatus
-
-### Error Mapping
-
-- `409`: selected slot already taken
-- `503`: doctor-service upstream connectivity/timeout/unavailable
-- `500`: internal server errors
-
-### Appointment Endpoints
-
-1) Create appointment (patient)
-
-`POST /api/appointments`
-
-Headers:
-
-```
-Authorization: Bearer <patient_jwt>
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-	"doctorId": "67f0a0b0c0d0e0f001122334",
-	"date": "2026-04-20",
-	"time": "10:30"
-}
-```
-
-2) Get my appointments (patient)
-
-`GET /api/appointments/my`
-
-3) Get doctor appointments (doctor)
-
-`GET /api/appointments/doctor`
-
-4) Get all appointments (admin)
-
-`GET /api/appointments/admin/all`
-
-5) Update appointment status (doctor/admin)
-
-`PUT /api/appointments/:id/status`
-
-Request body:
-
-```json
-{
-	"status": "confirmed"
-}
-```
-
-6) Cancel appointment (patient/admin)
-
-`DELETE /api/appointments/:id`
 
 ### 8) Create Telemedicine Session (Doctor/Patient)
 
