@@ -9,6 +9,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Layout
 import DashboardLayout from "./components/layout/DashboardLayout";
+import PatientProfile from "./pages/patient/PatientProfile";
+import MyReports from "./pages/patient/MyReports";
 
 // Doctor Pages
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -45,6 +47,11 @@ function App() {
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <DoctorProfile />
+          path="/patient/profile"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <PatientProfile />
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -56,6 +63,11 @@ function App() {
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <ManageAvailability />
+          path="/patient/reports"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <MyReports />
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -67,6 +79,11 @@ function App() {
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <MyPrescriptions />
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout>
+                <h1>Admin Dashboard</h1>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -97,6 +114,8 @@ function App() {
           }
         />
       </Routes>
+
+
     </BrowserRouter>
   );
 }

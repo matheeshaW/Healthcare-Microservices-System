@@ -7,11 +7,7 @@ import { Navigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { Spinner } from "../components/ui";
 
-export const ProtectedRoute = ({
-  children,
-  roles = null,
-  fallbackPath = "/login",
-}) => {
+function ProtectedRoute({ children, roles }) {
   const { user } = useContext(AuthContext);
   const token = localStorage.getItem("token");
 
@@ -55,6 +51,11 @@ export const ProtectedRoute = ({
         </div>
       </div>
     );
+  }
+
+  // If roles are specified, check role
+  if (roles && !roles.includes(user?.role)) {
+    return <Navigate to="/dashboard" />;
   }
 
   return children;
