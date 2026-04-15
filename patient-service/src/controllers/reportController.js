@@ -1,4 +1,5 @@
 const MedicalReport = require("../models/MedicalReport");
+const cloudinary = require("../config/cloudinary");
 
 // Upload report
 exports.uploadReport = async (req, res) => {
@@ -30,6 +31,39 @@ exports.getReports = async (req, res) => {
     res.json({
       success: true,
       data: reports
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// Delete report
+
+// DELETE report
+exports.deleteReport = async (req, res) => {
+  try {
+    const report = await MedicalReport.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    // Security: ensure owner
+    if (report.patientId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Delete from Cloudinary
+    await cloudinary.uploader.destroy(report.publicId);
+
+    // Delete from DB
+    await report.deleteOne();
+
+    res.json({
+      success: true,
+      message: "Report deleted"
     });
 
   } catch (err) {
