@@ -1,0 +1,187 @@
+services:
+  # === Infrastructure ===
+  mongodb:
+    image: mongo:7
+    container_name: hms-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - hms-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: hms-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - hms-network
+
+  # === Backend Services ===
+  patient-service:
+    build:
+      context: ./patient-service
+      dockerfile: Dockerfile
+    container_name: hms-patient
+    ports:
+      - "5001:5001"
+    environment:
+      PORT: 5001
+      MONGO_URI: mongodb://admin:password@mongodb:27017/patient-service?authSource=admin
+      JWT_SECRET: supersecretkey
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    depends_on:
+      - mongodb
+    networks:
+      - hms-network
+
+  doctor-service:
+    build:
+      context: ./doctor-service
+      dockerfile: Dockerfile
+    container_name: hms-doctor
+    ports:
+      - "5002:5002"
+    environment:
+      PORT: 5002
+      MONGO_URI: mongodb://admin:password@mongodb:27017/doctor-service?authSource=admin
+      JWT_SECRET: supersecretkey
+    depends_on:
+      - mongodb
+    networks:
+      - hms-network
+
+  appointment-service:
+    build:
+      context: ./appointment-service
+      dockerfile: Dockerfile
+    container_name: hms-appointment
+    ports:
+      - "5003:5003"
+    environment:
+      PORT: 5003
+      MONGO_URI: mongodb://admin:password@mongodb:27017/appointment-service?authSource=admin
+      JWT_SECRET: supersecretkey
+      DOCTOR_SERVICE_URL: http://doctor-service:5002
+      DOCTOR_ME_PATH: /api/doctors/me
+      DOCTOR_AVAILABILITY_PATH: /api/availability/doctor/:doctorId
+      DOCTOR_BOOK_SLOT_PATH: /api/availability/:availabilityId/book
+      DOCTOR_RELEASE_SLOT_PATH: /api/availability/:availabilityId/release
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      APPOINTMENT_QUEUE_NAME: appointment.created
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - doctor-service
+    networks:
+      - hms-network
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: hms-payment
+    ports:
+      - "5005:5005"
+    environment:
+      PORT: 5005
+      MONGO_URI: mongodb://admin:password@mongodb:27017/payment-service?authSource=admin
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - hms-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: hms-notification
+    ports:
+      - "5004:5004"
+    environment:
+      PORT: 5004
+      MONGO_URI: mongodb://admin:password@mongodb:27017/notification-service?authSource=admin
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - hms-network
+
+  telemedicine-service:
+    build:
+      context: ./telemedicine-service
+      dockerfile: Dockerfile
+    container_name: hms-telemedicine
+    ports:
+      - "5006:5006"
+    environment:
+      PORT: 5006
+      MONGO_URI: mongodb://admin:password@mongodb:27017/telemedicine-service?authSource=admin
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      JITSI_BASE_URL: https://meet.jit.si
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - hms-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: hms-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      JWT_SECRET: supersecretkey
+      PATIENT_SERVICE_URL: http://patient-service:5001
+      DOCTOR_SERVICE_URL: http://doctor-service:5002
+      APPOINTMENT_SERVICE_URL: http://appointment-service:5003
+      PAYMENT_SERVICE_URL: http://payment-service:5005
+      TELEMEDICINE_SERVICE_URL: http://telemedicine-service:5006
+    depends_on:
+      - patient-service
+      - doctor-service
+      - appointment-service
+      - payment-service
+      - telemedicine-service
+    networks:
+      - hms-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hms-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api-gateway
+    networks:
+      - hms-network
+
+networks:
+  hms-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  rabbitmq_data:
