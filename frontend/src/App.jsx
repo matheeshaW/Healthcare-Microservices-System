@@ -5,6 +5,8 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
+import VideoSession from './pages/telemedicine/VideoSession';
+
 function App() {
   return (
     <BrowserRouter>
@@ -22,6 +24,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/telemedicine/session/:id?" element={<VideoSession />} /><Route path="/telemedicine/session" element={<VideoSession />} />
       </Routes>
     </BrowserRouter>
   );
