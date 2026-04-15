@@ -15,29 +15,38 @@ const formatDate = (value) => {
   return parsedDate.toLocaleDateString();
 };
 
-function AppointmentCard({ appointment, onCancel, cancelling }) {
+function AppointmentCard({ appointment, doctorName, onCancel, cancelling }) {
   const appointmentId = appointment?._id;
   const isCancelled = appointment?.status === "cancelled";
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-semibold text-slate-900">Appointment</h3>
+        <div>
+          <h3 className="font-semibold text-slate-900">
+            {doctorName || "Doctor appointment"}
+          </h3>
+          <p className="text-sm text-slate-500">Patient booking record</p>
+        </div>
         <AppointmentStatusBadge status={appointment?.status} />
       </div>
 
-      <dl className="mt-3 space-y-1 text-sm text-slate-700">
+      <dl className="mt-4 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
         <div>
-          <dt className="inline font-medium">Date:</dt>{" "}
-          <dd className="inline">{formatDate(appointment?.date)}</dd>
+          <dt className="font-medium text-slate-900">Date</dt>
+          <dd>{formatDate(appointment?.date)}</dd>
         </div>
         <div>
-          <dt className="inline font-medium">Time:</dt>{" "}
-          <dd className="inline">{appointment?.time || "N/A"}</dd>
+          <dt className="font-medium text-slate-900">Time</dt>
+          <dd>{appointment?.time || "N/A"}</dd>
         </div>
         <div>
-          <dt className="inline font-medium">Doctor ID:</dt>{" "}
-          <dd className="inline break-all">{appointment?.doctorId || "N/A"}</dd>
+          <dt className="font-medium text-slate-900">Doctor</dt>
+          <dd className="break-all">{doctorName || appointment?.doctorId || "N/A"}</dd>
+        </div>
+        <div>
+          <dt className="font-medium text-slate-900">Payment</dt>
+          <dd className="capitalize">{appointment?.paymentStatus || "pending"}</dd>
         </div>
       </dl>
 
