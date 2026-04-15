@@ -3,10 +3,12 @@
  */
 
 import { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
 export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
   const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -19,6 +21,7 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
+    navigate("/login", { replace: true });
   };
 
   const getRoleBadgeColor = () => {

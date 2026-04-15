@@ -9,6 +9,9 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Layout
 import DashboardLayout from "./components/layout/DashboardLayout";
+import Home from "./pages/Home";
+
+// Patient Pages
 import PatientProfile from "./pages/patient/PatientProfile";
 import MyReports from "./pages/patient/MyReports";
 
@@ -107,11 +110,19 @@ function App() {
           }
         />
 
-        {/* Redirect /dashboard to /doctor/dashboard */}
+        
         <Route
-          path="/dashboard"
-          element={<Navigate to="/doctor/dashboard" replace />}
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Home />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
         />
+
+        <Route path="/dashboard" element={<Navigate to="/home" replace />} />
 
         {/* 404 Not Found */}
         <Route

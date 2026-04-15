@@ -13,7 +13,7 @@ function ProtectedRoute({ children, roles }) {
 
   // If no authentication token is present, redirect to login
   if (!token) {
-    return <Navigate to={fallbackPath} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // If token exists but user hasn't been loaded yet, show loading state
@@ -51,11 +51,6 @@ function ProtectedRoute({ children, roles }) {
         </div>
       </div>
     );
-  }
-
-  // If roles are specified, check role
-  if (roles && !roles.includes(user?.role)) {
-    return <Navigate to="/dashboard" />;
   }
 
   return children;
