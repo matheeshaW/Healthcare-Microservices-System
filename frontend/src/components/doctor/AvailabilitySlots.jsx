@@ -3,7 +3,7 @@
  */
 
 import { useState } from "react";
-import { Card, Badge, Button } from "../ui";
+import { Card, Badge } from "../ui";
 
 export const AvailabilitySlots = ({
   doctorId,

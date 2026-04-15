@@ -4,7 +4,6 @@
 
 import { useState, useCallback } from "react";
 import { useDoctors } from "../../hooks/useDoctors";
-import { Badge } from "../ui";
 
 export const DoctorSearch = ({
   onResultsChange,

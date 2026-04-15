@@ -16,7 +16,6 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
     { id: 3, message: "Profile verification completed", time: "2 hours ago" },
   ];
 
-
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
@@ -38,7 +37,6 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
   const getRoleLabel = () => {
     return userRole.charAt(0).toUpperCase() + userRole.slice(1);
   };
-
 
   return (
     <nav className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">

@@ -48,7 +48,11 @@ export const DoctorProfile = ({ onSuccess }) => {
       newErrors.name = "Name is required";
     }
 
-    if (!formData.experience || formData.experience < 0) {
+    if (
+      formData.experience === "" ||
+      isNaN(formData.experience) ||
+      formData.experience < 0
+    ) {
       newErrors.experience = "Valid experience years required";
     }
 

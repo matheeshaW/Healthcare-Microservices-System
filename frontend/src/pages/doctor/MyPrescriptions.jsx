@@ -3,7 +3,7 @@
  */
 
 import { useState } from "react";
-import { Card, Badge, Button, Spinner } from "../../components/ui";
+import { Card, Badge, Button } from "../../components/ui";
 
 export const MyPrescriptions = () => {
   const [isLoading, setIsLoading] = useState(false);

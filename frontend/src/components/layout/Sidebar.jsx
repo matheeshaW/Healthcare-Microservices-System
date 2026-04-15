@@ -2,7 +2,8 @@
  * Sidebar Component
  */
 
-import { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 export const Sidebar = ({
   userRole = "doctor",
@@ -10,6 +11,10 @@ export const Sidebar = ({
   isMobileMenuOpen = false,
   onClose,
 }) => {
+  if (!isOpen && !isMobileMenuOpen) {
+    return null;
+  }
+  const location = useLocation();
   const getMenuItems = () => {
     const doctorMenu = [
       {
@@ -31,21 +36,9 @@ export const Sidebar = ({
         badge: null,
       },
       {
-        label: "My Appointments",
-        icon: "clock",
-        path: "/doctor/appointments",
-        badge: "5",
-      },
-      {
         label: "My Prescriptions",
         icon: "document",
         path: "/doctor/prescriptions",
-        badge: null,
-      },
-      {
-        label: "Patients",
-        icon: "users",
-        path: "/doctor/patients",
         badge: null,
       },
     ];
@@ -292,7 +285,6 @@ export const Sidebar = ({
     return icons[iconType] || icons.grid;
   };
 
-  const [activeItem, setActiveItem] = useState(0);
   const menuItems = getMenuItems();
 
   return (
@@ -317,18 +309,15 @@ export const Sidebar = ({
         {/* Sidebar Content */}
         <div className="p-6 space-y-2">
           {menuItems.map((item, index) => (
-            <a
+            <NavLink
               key={index}
-              href={item.path}
-              onClick={() => {
-                setActiveItem(index);
-                onClose?.();
-              }}
-              className={`
+              to={item.path}
+              onClick={() => onClose?.()}
+              className={({ isActive }) => `
                 flex items-center gap-3 px-4 py-3 rounded-lg
                 font-semibold transition duration-200
                 ${
-                  activeItem === index
+                  isActive
                     ? "bg-cyan-600 text-white"
                     : "text-slate-700 hover:bg-slate-100"
                 }
@@ -343,7 +332,7 @@ export const Sidebar = ({
                     min-w-6 h-6 px-2 rounded-full
                     text-xs font-bold
                     ${
-                      activeItem === index
+                      location.pathname === item.path
                         ? "bg-white text-cyan-600"
                         : "bg-red-100 text-red-600"
                     }
@@ -352,7 +341,7 @@ export const Sidebar = ({
                   {item.badge}
                 </span>
               )}
-            </a>
+            </NavLink>
           ))}
         </div>
 

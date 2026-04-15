@@ -3,7 +3,7 @@
  */
 
 import { useState } from "react";
-import { Card, Button, Badge, Spinner } from "../../components/ui";
+import { Card, Button, Badge } from "../../components/ui";
 
 export const ManageAvailability = () => {
   const [availability, setAvailability] = useState([

@@ -3,8 +3,9 @@
  */
 
 import { useContext } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { Spinner } from "../components/ui";
 
 export const ProtectedRoute = ({
   children,
@@ -14,14 +15,18 @@ export const ProtectedRoute = ({
   const { user } = useContext(AuthContext);
   const token = localStorage.getItem("token");
 
-  // While checking authentication, show loading spinner
+  // If no authentication token is present, redirect to login
   if (!token) {
     return <Navigate to={fallbackPath} replace />;
   }
 
-  // If user is not authenticated, redirect to login
-  if (!user && !token) {
-    return <Navigate to={fallbackPath} replace />;
+  // If token exists but user hasn't been loaded yet, show loading state
+  if (token && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Spinner size="lg" variant="primary" label="Loading..." />
+      </div>
+    );
   }
 
   // If a specific role is required, check if user has it
@@ -40,12 +45,12 @@ export const ProtectedRoute = ({
             Your role:{" "}
             <span className="font-semibold">{user?.role || "unknown"}</span>
           </p>
-          <a
-            href="/login"
+          <Link
+            to="/login"
             className="inline-block px-6 py-3 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition"
           >
             Back to Login
-          </a>
+          </Link>
         </div>
       </div>
     );

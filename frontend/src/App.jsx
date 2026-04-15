@@ -1,5 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 
 // Auth pages
 import Login from "./pages/Login";
@@ -87,12 +86,12 @@ function App() {
               <div className="text-center space-y-4">
                 <h1 className="text-6xl font-bold text-slate-900">404</h1>
                 <p className="text-xl text-slate-600">Page not found</p>
-                <a
-                  href="/login"
+                <Link
+                  to="/login"
                   className="inline-block px-6 py-3 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition"
                 >
                   Back to Login
-                </a>
+                </Link>
               </div>
             </div>
           }

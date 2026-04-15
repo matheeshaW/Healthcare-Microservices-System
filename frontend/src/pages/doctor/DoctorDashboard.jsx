@@ -113,7 +113,7 @@ export const DoctorDashboard = ({ onNavigate }) => {
                     Experience
                   </p>
                   <p className="text-2xl font-bold text-cyan-600">
-                    {myProfile.experience}y
+                    {myProfile.experience} years
                   </p>
                 </div>
                 <div>

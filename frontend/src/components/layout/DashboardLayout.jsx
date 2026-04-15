@@ -7,7 +7,6 @@ import { Navbar } from "./Navbar";
 import { Sidebar } from "./Sidebar";
 
 export const DashboardLayout = ({ children, userRole = "doctor" }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -22,18 +21,12 @@ export const DashboardLayout = ({ children, userRole = "doctor" }) => {
         {/* Sidebar */}
         <Sidebar
           userRole={userRole}
-          isOpen={sidebarOpen}
           isMobileMenuOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
         />
 
         {/* Main Content Area */}
-        <main
-          className={`
-            flex-1 transition-all duration-300
-            ${sidebarOpen ? "md:ml-0" : "md:ml-0"}
-          `}
-        >
+        <main className="flex-1 transition-all duration-300">
           {/* Content Container */}
           <div className="p-6 md:p-8">{children}</div>
 
