@@ -28,7 +28,7 @@ function App() {
         <Route
           path="/patient/profile"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={["patient"]}>
               <DashboardLayout>
                 <PatientProfile />
               </DashboardLayout>
@@ -39,7 +39,7 @@ function App() {
         <Route
           path="/patient/reports"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={["patient"]}>
               <DashboardLayout>
                 <MyReports />
               </DashboardLayout>
