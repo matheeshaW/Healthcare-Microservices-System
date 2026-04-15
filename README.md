@@ -1,6 +1,8 @@
 ## Healthcare Microservices System
 
-This repository contains a Node.js microservices setup for a healthcare system. The patient service and API gateway are currently implemented and connected. The doctor service is implemented, but it is not yet wired through the API gateway.
+This repository contains a Node.js healthcare platform built using microservices. It includes an API gateway, domain services, event messaging with RabbitMQ, and a React frontend.
+
+Primary runtime target is Docker Compose so all services can be started together with one command.
 
 ### Services (current)
 
@@ -8,19 +10,98 @@ This repository contains a Node.js microservices setup for a healthcare system. 
 - patient-service: auth, patient profile, admin user listing, medical report upload/list.
 - appointment-service: booking lifecycle, doctor availability integration, RabbitMQ event publish.
 - doctor-service: doctor profiles & verification, availability slot scheduling, prescription management, doctor search by specialization, soft delete support.
-- notification-service: scaffold only.
-- payment-service: scaffold only.
-- telemedicine-service: scaffold only.
+- notification-service: consumes messages and sends/records notifications.
+- payment-service: payment processing and notification event publish.
+- telemedicine-service: video session creation and retrieval.
 - frontend: React + Vite + Tailwind.
 - k8s: placeholder for Kubernetes manifests.
 
+### Architecture overview
+
+- Client traffic enters through api-gateway (`:5000`).
+- Gateway forwards requests to internal services:
+  - `/api/auth`, `/api/patient`, `/api/admin`, `/api/reports` -> patient-service
+  - `/api/doctors`, `/api/availability`, `/api/prescriptions` -> doctor-service
+  - `/api/appointments` -> appointment-service
+  - `/api/payment` -> payment-service
+  - `/api/telemedicine` -> telemedicine-service
+- RabbitMQ is used for async messaging between services.
+- Each service has its own Docker image and dedicated environment settings.
+
 ### Prerequisites
 
-- Node.js >=20.19.0 (npm >=9.0.0)
-- MongoDB (Atlas or local)
-- Cloudinary account (for medical report uploads)
+- Docker Desktop (Windows/Mac) or Docker Engine + Docker Compose plugin
+- (Optional for local non-Docker mode) Node.js >=20.19.0 and npm >=9.0.0
+- (Optional for specific features) Cloudinary credentials and SMTP credentials
+
+### Quick start (Docker - recommended)
+
+From project root:
+
+```bash
+docker compose up --build -d
+```
+
+Check status:
+
+```bash
+docker compose ps
+```
+
+View logs:
+
+```bash
+docker compose logs -f --tail=100
+```
+
+Stop everything:
+
+```bash
+docker compose down
+```
+
+Stop + remove volumes (full reset):
+
+```bash
+docker compose down -v
+```
+
+### Service URLs (Docker)
+
+- API Gateway: `http://localhost:5000`
+- Frontend (Vite): `http://localhost:5173`
+- Patient service (direct): `http://localhost:5001`
+- Doctor service (direct): `http://localhost:5002`
+- Appointment service (direct): `http://localhost:5003`
+- Notification service (direct): `http://localhost:5004`
+- Payment service (direct): `http://localhost:5005`
+- Telemedicine service (direct): `http://localhost:5006`
+- RabbitMQ management UI: `http://localhost:15672` (guest/guest)
+
+### Important behavior notes
+
+- `http://localhost:5000/` returning `Cannot GET /` is expected. Gateway is API-first and does not define a root route.
+- Use API paths through gateway (for example `/api/auth/login`) or open the frontend on `http://localhost:5173`.
+- First startup can take longer due to image builds.
 
 ### Environment variables
+
+Compose already injects runtime environment values. If you run with Compose only, separate `.env` files per service are optional.
+
+If you need optional integrations, create a root `.env` file for Compose interpolation:
+
+```dotenv
+# Optional: patient-service Cloudinary upload feature
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+# Optional: notification-service email sender
+EMAIL_USER=
+EMAIL_PASS=
+```
+
+For local non-Docker execution, use per-service `.env` files such as:
 
 api-gateway/.env
 
@@ -28,6 +109,7 @@ api-gateway/.env
 PORT=5000
 JWT_SECRET=supersecretkey
 PATIENT_SERVICE_URL=http://localhost:5001
+DOCTOR_SERVICE_URL=http://localhost:5002
 APPOINTMENT_SERVICE_URL=http://localhost:5003
 TELEMEDICINE_SERVICE_URL=http://localhost:5006
 PAYMENT_SERVICE_URL=http://localhost:5005
@@ -87,11 +169,42 @@ RABBITMQ_URL=amqp://localhost
 MONGO_URI=your_mongodb_connection
 ```
 
+notification-service/.env
+
+```
+PORT=5004
+RABBITMQ_URL=amqp://localhost
+MONGO_URI=your_mongodb_connection
+EMAIL_USER=your_email
+EMAIL_PASS=your_app_password
+```
+
 Notes:
 
 - JWT secrets must match between api-gateway, patient-service, doctor-service, and appointment-service.
 - The MongoDB database name is the URI segment before `?`.
 - Report upload depends on valid Cloudinary credentials.
+
+### Dockerfiles and .dockerignore
+
+- Each service now has its own `Dockerfile`.
+- Backend services use retry-hardened npm install settings and `npm ci` for reproducible builds.
+- Frontend uses `npm install` because its lockfile may not always be in sync for `npm ci`.
+- Each service includes a `.dockerignore` to keep build contexts small and exclude local-only files.
+
+To verify `.dockerignore` is working, run:
+
+```bash
+docker compose build --no-cache patient-service
+```
+
+Then check `load build context ... transferring context: ...` in logs. Small values (KB-level) indicate ignore rules are effective.
+
+### Local run (without Docker)
+
+Use this only if you intentionally want to run services manually.
+
+For local mode, you still need MongoDB and RabbitMQ running (local installs or Docker containers).
 
 ### Install dependencies
 
@@ -106,6 +219,15 @@ cd ../doctor-service
 npm install
 
 cd ../appointment-service
+npm install
+
+cd ../payment-service
+npm install
+
+cd ../notification-service
+npm install
+
+cd ../telemedicine-service
 npm install
 
 cd ../frontend
@@ -142,7 +264,28 @@ cd appointment-service
 npm run dev
 ```
 
-Terminal 5 (frontend)
+Terminal 5 (payment-service)
+
+```
+cd payment-service
+npm run dev
+```
+
+Terminal 6 (notification-service)
+
+```
+cd notification-service
+npm run dev
+```
+
+Terminal 7 (telemedicine-service)
+
+```
+cd telemedicine-service
+npm run dev
+```
+
+Terminal 8 (frontend)
 
 ```
 cd frontend
