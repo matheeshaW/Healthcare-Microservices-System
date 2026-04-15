@@ -4,6 +4,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import PatientProfile from "./pages/patient/PatientProfile";
+import MyReports from "./pages/patient/MyReports";
 
 function App() {
   return (
@@ -22,7 +24,42 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/patient/profile"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <PatientProfile />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patient/reports"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <MyReports />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout>
+                <h1>Admin Dashboard</h1>
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
+
+
     </BrowserRouter>
   );
 }
