@@ -1,26 +1,23 @@
-import { useEffect, useState } from "react";
-import { getReports } from "../../api/patient.api";
+import { useEffect } from "react";
+import { usePatient } from "../../hooks/usePatient";
 import ReportUploader from "../../components/patient/ReportUploader";
 import ReportList from "../../components/patient/ReportList";
+import { Spinner } from "../../components/ui";
 
 function MyReports() {
-  const [reports, setReports] = useState([]);
-
-  const fetchReports = async () => {
-    const res = await getReports();
-    setReports(res.data.data);
-  };
+  const { reports, fetchReports, addReport, loading } = usePatient();
 
   useEffect(() => {
     fetchReports();
   }, []);
 
+  if (loading) return <Spinner label="Loading reports..." />;
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-4">My Reports</h2>
 
-      <ReportUploader onUpload={fetchReports} />
-
+      <ReportUploader onUpload={addReport} />
       <ReportList reports={reports} />
     </div>
   );
