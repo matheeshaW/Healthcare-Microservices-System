@@ -28,14 +28,13 @@ export const Card = ({
 
   const baseStyles = `
     bg-white rounded-lg
-    border border-slate-200
   `;
 
   const hoverClass = hoverEffect
     ? "hover:shadow-lg transition-shadow duration-300 cursor-pointer"
     : "";
 
-  const borderClass = border ? "border-slate-300" : "border-slate-100";
+  const borderClass = border ? "border border-slate-300" : "";
 
   const cardClass = `
     ${baseStyles}

@@ -2,7 +2,7 @@
  * Modal Component
  */
 
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 
 export const Modal = ({
   isOpen = false,
@@ -15,6 +15,8 @@ export const Modal = ({
   className = "",
   ...props
 }) => {
+  const titleId = useId();
+
   const sizeStyles = {
     sm: "max-w-sm",
     md: "max-w-md",
@@ -23,6 +25,8 @@ export const Modal = ({
   };
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+
     const handleEscape = (e) => {
       if (e.key === "Escape" && isOpen) {
         onClose?.();
@@ -36,7 +40,7 @@ export const Modal = ({
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = previousOverflow;
     };
   }, [isOpen, onClose]);
 
@@ -62,13 +66,19 @@ export const Modal = ({
           ${sizeStyles[size]}
           ${className}
         `}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : "Modal"}
       >
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-            <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+            <h2 id={titleId} className="text-xl font-bold text-slate-900">
+              {title}
+            </h2>
             <button
-              onClick={onClose}
+              onClick={() => onClose?.()}
               className="text-slate-500 hover:text-slate-700 transition"
               aria-label="Close modal"
             >

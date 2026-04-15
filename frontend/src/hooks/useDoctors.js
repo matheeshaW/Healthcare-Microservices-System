@@ -51,7 +51,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to fetch doctors";
       setError(errorMessage);
       console.error("Error fetching doctors:", err);
-      throw err;
+      throw new Error(errorMessage, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ export const useDoctors = () => {
           err.message || err.data?.message || "Failed to search doctors";
         setSearchError(errorMessage);
         console.error("Error searching doctors:", err);
-        throw err;
+        throw new Error(errorMessage, { cause: err });
       } finally {
         setSearchLoading(false);
       }
@@ -124,7 +124,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to fetch your profile";
       setProfileError(errorMessage);
       console.error("Error fetching my profile:", err);
-      throw err;
+      throw new Error(errorMessage, { cause: err });
     } finally {
       setProfileLoading(false);
     }
@@ -149,7 +149,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to fetch doctor";
       setError(errorMessage);
       console.error("Error fetching doctor:", err);
-      throw err;
+      throw new Error(errorMessage, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -176,12 +176,16 @@ export const useDoctors = () => {
           throw new Error(`Missing required fields: ${missing.join(", ")}`);
         }
 
-        // Validate experience is a number
-        if (typeof profileData.experience !== "number") {
-          throw new Error("Experience must be a number");
+        const experience = Number(profileData.experience);
+        // Validate experience is a finite, non-negative number
+        if (!Number.isFinite(experience) || experience < 0) {
+          throw new Error("Experience must be a non-negative number");
         }
 
-        const response = await doctorAPI.createDoctorProfile(profileData);
+        const response = await doctorAPI.createDoctorProfile({
+          ...profileData,
+          experience,
+        });
 
         if (response.success) {
           // Fetch the newly created profile
@@ -194,7 +198,7 @@ export const useDoctors = () => {
         const errorMessage = err.message || "Failed to create profile";
         setProfileError(errorMessage);
         console.error("Error creating profile:", err);
-        throw err;
+        throw new Error(errorMessage, { cause: err });
       } finally {
         setProfileLoading(false);
       }
@@ -236,7 +240,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to update profile";
       setProfileError(errorMessage);
       console.error("Error updating profile:", err);
-      throw err;
+      throw new Error(errorMessage, { cause: err });
     } finally {
       setProfileLoading(false);
     }
@@ -261,7 +265,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to delete profile";
       setProfileError(errorMessage);
       console.error("Error deleting profile:", err);
-      throw err;
+      throw new Error(errorMessage, { cause: err });
     } finally {
       setProfileLoading(false);
     }
@@ -278,9 +282,14 @@ export const useDoctors = () => {
         const formattedDoctor = doctorAPI.formatDoctorData(response.data);
         setCurrentDoctor(formattedDoctor);
 
-        // Update in doctors list if it exists
+        // Update in doctors and filtered doctors lists if the doctor exists
         setDoctors((prevDoctors) =>
           prevDoctors.map((doc) =>
+            doc.id === doctorId ? { ...doc, verified: true } : doc,
+          ),
+        );
+        setFilteredDoctors((prevFilteredDoctors) =>
+          prevFilteredDoctors.map((doc) =>
             doc.id === doctorId ? { ...doc, verified: true } : doc,
           ),
         );
@@ -294,7 +303,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to verify doctor";
       setProfileError(errorMessage);
       console.error("Error verifying doctor:", err);
-      throw err;
+      throw new Error(errorMessage, { cause: err });
     } finally {
       setProfileLoading(false);
     }

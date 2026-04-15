@@ -4,11 +4,21 @@ import API from "./axios";
  * Doctor API Service
  */
 
+const createApiError = (error, fallbackMessage) => {
+  const responseData = error.response?.data;
+  const apiError = new Error(responseData?.message || fallbackMessage);
+  apiError.responseData = responseData || {
+    success: false,
+    message: fallbackMessage,
+  };
+  apiError.cause = error;
+  return apiError;
+};
+
 /**
- * Get all doctors (optionally filtered)
+ * Get all doctors (admin-only)
  * @param {Object} params
- * @param {string} params.specialization
- * @param {string} params.verified
+ * @param {boolean} [params.includeDeleted] - Whether to include deleted doctors
  * @returns {Promise<Object>}
  */
 export const getAllDoctors = async (params = {}) => {
@@ -16,12 +26,7 @@ export const getAllDoctors = async (params = {}) => {
     const response = await API.get("/doctors/all", { params });
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data || {
-        success: false,
-        message: "Failed to fetch doctors",
-      }
-    );
+    throw createApiError(error, "Failed to fetch doctors");
   }
 };
 
@@ -37,12 +42,7 @@ export const searchDoctors = async (params = {}) => {
     const response = await API.get("/doctors/search", { params });
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data || {
-        success: false,
-        message: "Failed to search doctors",
-      }
-    );
+    throw createApiError(error, "Failed to search doctors");
   }
 };
 
@@ -55,12 +55,7 @@ export const getMyProfile = async () => {
     const response = await API.get("/doctors/me");
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data || {
-        success: false,
-        message: "Failed to fetch your profile",
-      }
-    );
+    throw createApiError(error, "Failed to fetch your profile");
   }
 };
 
@@ -74,12 +69,7 @@ export const getDoctorById = async (doctorId) => {
     const response = await API.get(`/doctors/${doctorId}`);
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data || {
-        success: false,
-        message: "Failed to fetch doctor profile",
-      }
-    );
+    throw createApiError(error, "Failed to fetch doctor profile");
   }
 };
 
@@ -99,12 +89,7 @@ export const createDoctorProfile = async (profileData) => {
     const response = await API.post("/doctors", profileData);
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data || {
-        success: false,
-        message: "Failed to create doctor profile",
-      }
-    );
+    throw createApiError(error, "Failed to create doctor profile");
   }
 };
 
@@ -123,12 +108,7 @@ export const updateDoctorProfile = async (doctorId, updateData) => {
     const response = await API.put(`/doctors/${doctorId}`, updateData);
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data || {
-        success: false,
-        message: "Failed to update doctor profile",
-      }
-    );
+    throw createApiError(error, "Failed to update doctor profile");
   }
 };
 
@@ -142,12 +122,7 @@ export const verifyDoctor = async (doctorId) => {
     const response = await API.put(`/doctors/${doctorId}/verify`);
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data || {
-        success: false,
-        message: "Failed to verify doctor",
-      }
-    );
+    throw createApiError(error, "Failed to verify doctor");
   }
 };
 
@@ -161,12 +136,7 @@ export const deleteDoctorProfile = async (doctorId) => {
     const response = await API.delete(`/doctors/${doctorId}`);
     return response.data;
   } catch (error) {
-    throw (
-      error.response?.data || {
-        success: false,
-        message: "Failed to delete doctor profile",
-      }
-    );
+    throw createApiError(error, "Failed to delete doctor profile");
   }
 };
 
