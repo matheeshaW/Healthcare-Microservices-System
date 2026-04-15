@@ -51,6 +51,6 @@ function Sidebar() {
       </ul>
     </aside>
   );
-}
+};
 
 export default Sidebar;
