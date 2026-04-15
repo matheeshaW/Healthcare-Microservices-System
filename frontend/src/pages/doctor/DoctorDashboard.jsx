@@ -107,7 +107,7 @@ export const DoctorDashboard = ({ onNavigate }) => {
           </p>
           <Button
             variant="primary"
-            onClick={() => onNavigate?.("create-profile")}
+            onClick={() => navigate("/doctor/profile")}
           >
             Create Profile
           </Button>
@@ -200,14 +200,14 @@ export const DoctorDashboard = ({ onNavigate }) => {
         <div className="flex gap-3">
           <Button
             variant="primary"
-            onClick={() => onNavigate?.("edit-profile")}
+            onClick={() => navigate("/doctor/profile")}
             fullWidth
           >
             Edit Profile
           </Button>
           <Button
             variant="secondary"
-            onClick={() => onNavigate?.("manage-availability")}
+            onClick={() => navigate("/doctor/availability")}
             fullWidth
           >
             Manage Availability
@@ -254,7 +254,7 @@ export const DoctorDashboard = ({ onNavigate }) => {
           variant="secondary"
           fullWidth
           className="mt-4"
-          onClick={() => onNavigate?.("appointments")}
+          onClick={() => setActiveTab('overview')}
         >
           View All Appointments
         </Button>
