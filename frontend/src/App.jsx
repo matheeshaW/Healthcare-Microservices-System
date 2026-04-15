@@ -47,6 +47,12 @@ function App() {
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <DoctorProfile />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/patient/profile"
           element={
             <ProtectedRoute roles={["patient"]}>
@@ -63,6 +69,12 @@ function App() {
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <ManageAvailability />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/patient/reports"
           element={
             <ProtectedRoute roles={["patient"]}>
@@ -79,6 +91,12 @@ function App() {
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <MyPrescriptions />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/admin"
           element={
             <ProtectedRoute roles={["admin"]}>
@@ -114,8 +132,6 @@ function App() {
           }
         />
       </Routes>
-
-
     </BrowserRouter>
   );
 }

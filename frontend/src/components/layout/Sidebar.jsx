@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 
-function Sidebar() {
+export function Sidebar() {
   const { user } = useContext(AuthContext);
 
   return (
@@ -38,6 +38,4 @@ function Sidebar() {
       </ul>
     </div>
   );
-};
-
-export default Sidebar;
+}
