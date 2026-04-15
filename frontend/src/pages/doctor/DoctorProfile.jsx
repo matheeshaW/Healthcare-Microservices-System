@@ -3,10 +3,12 @@
  */
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDoctors } from "../../hooks/useDoctors";
 import { Card, Button, Badge, Spinner, StatusChip } from "../../components/ui";
 
 export const DoctorProfile = ({ onSuccess }) => {
+  const navigate = useNavigate();
   const {
     myProfile,
     fetchMyProfile,
@@ -14,6 +16,7 @@ export const DoctorProfile = ({ onSuccess }) => {
     createProfile,
     profileLoading,
     profileError,
+    profileNotFound,
   } = useDoctors();
 
   const [isCreating, setIsCreating] = useState(false);
@@ -47,12 +50,12 @@ export const DoctorProfile = ({ onSuccess }) => {
         licenseNumber: myProfile.licenseNumber || "",
         phoneNumber: myProfile.phoneNumber || "",
       });
-    } else if (profileError && profileError.includes("Doctor profile")) {
-      // Create mode - no profile exists
+    } else if (profileNotFound) {
+      // Create mode - no profile exists (status code 404)
       setIsCreating(true);
       setIsEditing(true);
     }
-  }, [myProfile, profileError]);
+  }, [myProfile, profileNotFound]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -114,20 +117,23 @@ export const DoctorProfile = ({ onSuccess }) => {
 
     try {
       if (isCreating) {
-        // Create new profile
-        await createProfile(formData);
-        setSuccessMessage("Profile created successfully!");
-        setIsCreating(false);
-        setIsEditing(false);
-        setTimeout(() => setSuccessMessage(""), 3000);
-        onSuccess?.();
+        const response = await createProfile(formData);
+        if (response?.success === true) {
+          setSuccessMessage("Profile created successfully!");
+          setIsCreating(false);
+          setIsEditing(false);
+          setTimeout(() => setSuccessMessage(""), 3000);
+          onSuccess?.();
+        }
       } else {
         // Update existing profile
-        await updateProfile(myProfile.id, formData);
-        setSuccessMessage("Profile updated successfully!");
-        setIsEditing(false);
-        setTimeout(() => setSuccessMessage(""), 3000);
-        onSuccess?.();
+        const response = await updateProfile(myProfile.id, formData);
+        if (response?.success === true) {
+          setSuccessMessage("Profile updated successfully!");
+          setIsEditing(false);
+          setTimeout(() => setSuccessMessage(""), 3000);
+          onSuccess?.();
+        }
       }
     } catch (error) {
       console.error("Failed to save profile:", error);
@@ -136,8 +142,9 @@ export const DoctorProfile = ({ onSuccess }) => {
 
   const handleCancel = () => {
     if (isCreating) {
-      // Cancel create mode - go back on browser
-      window.history.back();
+      // Cancel create mode - navigate back to dashboard
+      // Use navigate(-1) to go back in history, with /doctor/dashboard as fallback
+      navigate(-1);
     } else {
       // Cancel edit mode - revert changes
       setIsEditing(false);
@@ -188,7 +195,9 @@ export const DoctorProfile = ({ onSuccess }) => {
           Doctor Profile
         </h1>
         <p className="text-slate-600">
-          {isCreating ? "Create your professional profile" : "View and manage your professional information"}
+          {isCreating
+            ? "Create your professional profile"
+            : "View and manage your professional information"}
         </p>
       </div>
 
@@ -200,164 +209,167 @@ export const DoctorProfile = ({ onSuccess }) => {
       )}
 
       {/* Create Mode Form */}
-      {isCreating && isEditing ? (
+      {isCreating ? (
         <Card padding="lg" className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  className={`
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                className={`
                     w-full px-4 py-2.5 rounded-lg border
                     text-slate-900 font-medium
                     focus:outline-none focus:ring-2 focus:ring-cyan-500
                     transition
                     ${errors.name ? "border-red-500" : "border-slate-300"}
                   `}
-                  disabled={profileLoading}
-                />
-                {errors.name && (
-                  <p className="text-red-600 text-sm mt-1">{errors.name}</p>
-                )}
-              </div>
+                disabled={profileLoading}
+              />
+              {errors.name && (
+                <p className="text-red-600 text-sm mt-1">{errors.name}</p>
+              )}
+            </div>
 
-              {/* Specialization - For Create Mode */}
-              {isCreating && (
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Specialization
-                  </label>
-                  <select
-                    value={formData.specialization}
-                    onChange={(e) => handleInputChange("specialization", e.target.value)}
-                    className={`
+            {/* Specialization - For Create Mode */}
+            {isCreating && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Specialization
+                </label>
+                <select
+                  value={formData.specialization}
+                  onChange={(e) =>
+                    handleInputChange("specialization", e.target.value)
+                  }
+                  className={`
                       w-full px-4 py-2.5 rounded-lg border
                       text-slate-900 font-medium
                       focus:outline-none focus:ring-2 focus:ring-cyan-500
                       transition
                       ${errors.specialization ? "border-red-500" : "border-slate-300"}
                     `}
-                    disabled={profileLoading}
-                  >
-                    <option value="">Select Specialization</option>
-                    <option value="Cardiology">Cardiology</option>
-                    <option value="Dermatology">Dermatology</option>
-                    <option value="Pediatrics">Pediatrics</option>
-                    <option value="Neurology">Neurology</option>
-                    <option value="Orthopedics">Orthopedics</option>
-                    <option value="General Practice">General Practice</option>
-                  </select>
-                  {errors.specialization && (
-                    <p className="text-red-600 text-sm mt-1">{errors.specialization}</p>
-                  )}
-                </div>
-              )}
+                  disabled={profileLoading}
+                >
+                  <option value="">Select Specialization</option>
+                  <option value="Cardiology">Cardiology</option>
+                  <option value="Dermatology">Dermatology</option>
+                  <option value="Pediatrics">Pediatrics</option>
+                  <option value="Neurology">Neurology</option>
+                  <option value="Orthopedics">Orthopedics</option>
+                  <option value="General Medicine">General Medicine</option>
+                  <option value="Dentistry">Dentistry</option>
+                </select>
+                {errors.specialization && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.specialization}
+                  </p>
+                )}
+              </div>
+            )}
 
-              {/* Experience */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Years of Experience
-                </label>
-                <input
-                  type="number"
-                  value={formData.experience}
-                  onChange={(e) =>
-                    handleInputChange(
-                      "experience",
-                      e.target.value === "" ? "" : parseInt(e.target.value, 10),
-                    )
-                  }
-                  min="0"
-                  max="100"
-                  className={`
+            {/* Experience */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Years of Experience
+              </label>
+              <input
+                type="number"
+                value={formData.experience}
+                onChange={(e) =>
+                  handleInputChange(
+                    "experience",
+                    e.target.value === "" ? "" : parseInt(e.target.value, 10),
+                  )
+                }
+                min="0"
+                max="100"
+                className={`
                     w-full px-4 py-2.5 rounded-lg border
                     text-slate-900 font-medium
                     focus:outline-none focus:ring-2 focus:ring-cyan-500
                     transition
                     ${errors.experience ? "border-red-500" : "border-slate-300"}
                   `}
-                  disabled={profileLoading}
-                />
-                {errors.experience && (
-                  <p className="text-red-600 text-sm mt-1">
-                    {errors.experience}
-                  </p>
-                )}
-              </div>
+                disabled={profileLoading}
+              />
+              {errors.experience && (
+                <p className="text-red-600 text-sm mt-1">{errors.experience}</p>
+              )}
+            </div>
 
-              {/* Hospital */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Hospital/Clinic Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.hospital}
-                  onChange={(e) =>
-                    handleInputChange("hospital", e.target.value)
-                  }
-                  className={`
+            {/* Hospital */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Hospital/Clinic Name
+              </label>
+              <input
+                type="text"
+                value={formData.hospital}
+                onChange={(e) => handleInputChange("hospital", e.target.value)}
+                className={`
                     w-full px-4 py-2.5 rounded-lg border
                     text-slate-900 font-medium
                     focus:outline-none focus:ring-2 focus:ring-cyan-500
                     transition
                     ${errors.hospital ? "border-red-500" : "border-slate-300"}
                   `}
-                  disabled={profileLoading}
-                />
-                {errors.hospital && (
-                  <p className="text-red-600 text-sm mt-1">{errors.hospital}</p>
-                )}
-              </div>
+                disabled={profileLoading}
+              />
+              {errors.hospital && (
+                <p className="text-red-600 text-sm mt-1">{errors.hospital}</p>
+              )}
+            </div>
 
-              {/* License Number - For Create Mode */}
-              {isCreating && (
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Medical License Number
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.licenseNumber}
-                    onChange={(e) =>
-                      handleInputChange("licenseNumber", e.target.value)
-                    }
-                    className={`
+            {/* License Number - For Create Mode */}
+            {isCreating && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Medical License Number
+                </label>
+                <input
+                  type="text"
+                  value={formData.licenseNumber}
+                  onChange={(e) =>
+                    handleInputChange("licenseNumber", e.target.value)
+                  }
+                  className={`
                       w-full px-4 py-2.5 rounded-lg border
                       text-slate-900 font-medium
                       focus:outline-none focus:ring-2 focus:ring-cyan-500
                       transition
                       ${
-                        errors.licenseNumber ? "border-red-500" : "border-slate-300"
+                        errors.licenseNumber
+                          ? "border-red-500"
+                          : "border-slate-300"
                       }
                     `}
-                    disabled={profileLoading}
-                  />
-                  {errors.licenseNumber && (
-                    <p className="text-red-600 text-sm mt-1">
-                      {errors.licenseNumber}
-                    </p>
-                  )}
-                </div>
-              )}
+                  disabled={profileLoading}
+                />
+                {errors.licenseNumber && (
+                  <p className="text-red-600 text-sm mt-1">
+                    {errors.licenseNumber}
+                  </p>
+                )}
+              </div>
+            )}
 
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={formData.phoneNumber}
-                  onChange={(e) =>
-                    handleInputChange("phoneNumber", e.target.value)
-                  }
-                  className={`
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={formData.phoneNumber}
+                onChange={(e) =>
+                  handleInputChange("phoneNumber", e.target.value)
+                }
+                className={`
                     w-full px-4 py-2.5 rounded-lg border
                     text-slate-900 font-medium
                     focus:outline-none focus:ring-2 focus:ring-cyan-500
@@ -366,37 +378,37 @@ export const DoctorProfile = ({ onSuccess }) => {
                       errors.phoneNumber ? "border-red-500" : "border-slate-300"
                     }
                   `}
-                  disabled={profileLoading}
-                />
-                {errors.phoneNumber && (
-                  <p className="text-red-600 text-sm mt-1">
-                    {errors.phoneNumber}
-                  </p>
-                )}
-              </div>
+                disabled={profileLoading}
+              />
+              {errors.phoneNumber && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.phoneNumber}
+                </p>
+              )}
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="submit"
-                  variant="success"
-                  fullWidth
-                  loading={profileLoading}
-                  disabled={profileLoading}
-                >
-                  {isCreating ? "Create Profile" : "Save Changes"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  fullWidth
-                  onClick={handleCancel}
-                  disabled={profileLoading}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="submit"
+                variant="success"
+                fullWidth
+                loading={profileLoading}
+                disabled={profileLoading}
+              >
+                {isCreating ? "Create Profile" : "Save Changes"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                fullWidth
+                onClick={handleCancel}
+                disabled={profileLoading}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
         </Card>
       ) : myProfile ? (
         <Card padding="lg" className="space-y-6">

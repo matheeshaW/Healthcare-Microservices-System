@@ -7,13 +7,14 @@ import { useNavigate } from "react-router-dom";
 import { useDoctors } from "../../hooks/useDoctors";
 import { Card, StatusChip, Spinner, Button } from "../../components/ui";
 
-export const DoctorDashboard = ({ onNavigate }) => {
+export const DoctorDashboard = () => {
   const navigate = useNavigate();
   const {
     myProfile,
     fetchMyProfile,
     profileLoading,
     profileError,
+    profileNotFound,
     clearErrors,
   } = useDoctors();
 
@@ -64,11 +65,8 @@ export const DoctorDashboard = ({ onNavigate }) => {
     }
 
     if (profileError) {
-      // Check if it's a "not found" error - show Create Profile option
-      if (
-        profileError.includes("not found") ||
-        profileError.includes("Doctor profile")
-      ) {
+      // Check if profile doesn't exist (404 Not Found)
+      if (profileNotFound) {
         return (
           <Card padding="lg" className="text-center space-y-4">
             <p className="text-slate-600 font-medium">No profile found</p>
@@ -105,10 +103,7 @@ export const DoctorDashboard = ({ onNavigate }) => {
           <p className="text-sm text-slate-500">
             You need to create a doctor profile first
           </p>
-          <Button
-            variant="primary"
-            onClick={() => navigate("/doctor/profile")}
-          >
+          <Button variant="primary" onClick={() => navigate("/doctor/profile")}>
             Create Profile
           </Button>
         </Card>
@@ -254,7 +249,7 @@ export const DoctorDashboard = ({ onNavigate }) => {
           variant="secondary"
           fullWidth
           className="mt-4"
-          onClick={() => setActiveTab('overview')}
+          onClick={() => setActiveTab("appointments")}
         >
           View All Appointments
         </Button>
