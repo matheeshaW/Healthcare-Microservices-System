@@ -19,7 +19,7 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-white to-emerald-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-cyan-100 via-white to-emerald-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white/90 p-8 shadow-2xl backdrop-blur-sm">
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-700">
           Healthcare System
@@ -51,7 +51,10 @@ function Login() {
 
         <p className="mt-5 text-center text-sm text-slate-600">
           No account yet?{" "}
-          <Link to="/register" className="font-semibold text-cyan-700 hover:text-cyan-800">
+          <Link
+            to="/register"
+            className="font-semibold text-cyan-700 hover:text-cyan-800"
+          >
             Create one
           </Link>
         </p>
