@@ -47,12 +47,10 @@ app.use(
         "Gateway Error: Patient Service is unreachable.",
         err.message,
       );
-      res
-        .status(502)
-        .json({
-          success: false,
-          error: "Patient Service is currently offline.",
-        });
+      res.status(502).json({
+        success: false,
+        error: "Patient Service is currently offline.",
+      });
     },
   }),
 );
@@ -70,12 +68,10 @@ app.use(
         "Gateway Error: Patient Service is unreachable.",
         err.message,
       );
-      res
-        .status(502)
-        .json({
-          success: false,
-          error: "Patient Service is currently offline.",
-        });
+      res.status(502).json({
+        success: false,
+        error: "Patient Service is currently offline.",
+      });
     },
   }),
 );
@@ -92,12 +88,10 @@ app.use(
         "Gateway Error: Patient Service is unreachable.",
         err.message,
       );
-      res
-        .status(502)
-        .json({
-          success: false,
-          error: "Patient Service is currently offline.",
-        });
+      res.status(502).json({
+        success: false,
+        error: "Patient Service is currently offline.",
+      });
     },
   }),
 );
@@ -115,12 +109,10 @@ app.use(
         "Gateway Error: Payment Service is unreachable.",
         err.message,
       );
-      res
-        .status(502)
-        .json({
-          success: false,
-          error: "Payment Service is currently offline.",
-        });
+      res.status(502).json({
+        success: false,
+        error: "Payment Service is currently offline.",
+      });
     },
   }),
 );
