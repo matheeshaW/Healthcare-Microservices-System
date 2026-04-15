@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -6,6 +6,9 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import PatientProfile from "./pages/patient/PatientProfile";
 import MyReports from "./pages/patient/MyReports";
+import BookAppointment from "./pages/appointment/bookAppointment";
+import MyAppointments from "./pages/appointment/myAppointments";
+import AppointmentDetail from "./pages/appointment/appointmentDetail";
 
 function App() {
   return (
@@ -13,6 +16,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/profile" element={<Navigate to="/patient/profile" replace />} />
+        <Route path="/reports" element={<Navigate to="/patient/reports" replace />} />
+        <Route path="/appointments" element={<Navigate to="/appointment/my" replace />} />
 
         <Route
           path="/dashboard"
@@ -57,9 +63,40 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/appointment/book"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <BookAppointment />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/appointment/my"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <MyAppointments />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/appointment/:id"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <AppointmentDetail />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
-
-
     </BrowserRouter>
   );
 }
