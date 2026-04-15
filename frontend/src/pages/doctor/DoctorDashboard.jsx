@@ -3,15 +3,18 @@
  */
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDoctors } from "../../hooks/useDoctors";
 import { Card, StatusChip, Spinner, Button } from "../../components/ui";
 
-export const DoctorDashboard = ({ onNavigate }) => {
+export const DoctorDashboard = () => {
+  const navigate = useNavigate();
   const {
     myProfile,
     fetchMyProfile,
     profileLoading,
     profileError,
+    profileNotFound,
     clearErrors,
   } = useDoctors();
 
@@ -62,6 +65,25 @@ export const DoctorDashboard = ({ onNavigate }) => {
     }
 
     if (profileError) {
+      // Check if profile doesn't exist (404 Not Found)
+      if (profileNotFound) {
+        return (
+          <Card padding="lg" className="text-center space-y-4">
+            <p className="text-slate-600 font-medium">No profile found</p>
+            <p className="text-sm text-slate-500">
+              You need to create a doctor profile first
+            </p>
+            <Button
+              variant="primary"
+              onClick={() => navigate("/doctor/profile")}
+            >
+              Create Profile
+            </Button>
+          </Card>
+        );
+      }
+
+      // For other errors, show retry button
       return (
         <Card padding="lg" className="bg-red-50 border border-red-200">
           <div className="space-y-3">
@@ -81,10 +103,7 @@ export const DoctorDashboard = ({ onNavigate }) => {
           <p className="text-sm text-slate-500">
             You need to create a doctor profile first
           </p>
-          <Button
-            variant="primary"
-            onClick={() => onNavigate?.("create-profile")}
-          >
+          <Button variant="primary" onClick={() => navigate("/doctor/profile")}>
             Create Profile
           </Button>
         </Card>
@@ -143,16 +162,6 @@ export const DoctorDashboard = ({ onNavigate }) => {
                 </div>
               </div>
             </div>
-
-            <div className="hidden md:block">
-              <Card padding="md" className="text-center w-32">
-                <div className="w-24 h-24 mx-auto bg-linear-to-br from-cyan-200 to-emerald-200 rounded-full flex items-center justify-center">
-                  <span className="text-3xl font-bold text-white">
-                    {myProfile.name.charAt(0)}
-                  </span>
-                </div>
-              </Card>
-            </div>
           </div>
         </Card>
 
@@ -186,14 +195,14 @@ export const DoctorDashboard = ({ onNavigate }) => {
         <div className="flex gap-3">
           <Button
             variant="primary"
-            onClick={() => onNavigate?.("edit-profile")}
+            onClick={() => navigate("/doctor/profile")}
             fullWidth
           >
             Edit Profile
           </Button>
           <Button
             variant="secondary"
-            onClick={() => onNavigate?.("manage-availability")}
+            onClick={() => navigate("/doctor/availability")}
             fullWidth
           >
             Manage Availability
@@ -240,7 +249,7 @@ export const DoctorDashboard = ({ onNavigate }) => {
           variant="secondary"
           fullWidth
           className="mt-4"
-          onClick={() => onNavigate?.("appointments")}
+          onClick={() => setActiveTab("appointments")}
         >
           View All Appointments
         </Button>
