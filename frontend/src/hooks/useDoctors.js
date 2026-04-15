@@ -51,7 +51,6 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to fetch doctors";
       setError(errorMessage);
       console.error("Error fetching doctors:", err);
-      throw new Error(errorMessage, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -97,7 +96,6 @@ export const useDoctors = () => {
           err.message || err.data?.message || "Failed to search doctors";
         setSearchError(errorMessage);
         console.error("Error searching doctors:", err);
-        throw new Error(errorMessage, { cause: err });
       } finally {
         setSearchLoading(false);
       }
@@ -124,7 +122,6 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to fetch your profile";
       setProfileError(errorMessage);
       console.error("Error fetching my profile:", err);
-      throw new Error(errorMessage, { cause: err });
     } finally {
       setProfileLoading(false);
     }
@@ -149,7 +146,6 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to fetch doctor";
       setError(errorMessage);
       console.error("Error fetching doctor:", err);
-      throw new Error(errorMessage, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -198,7 +194,6 @@ export const useDoctors = () => {
         const errorMessage = err.message || "Failed to create profile";
         setProfileError(errorMessage);
         console.error("Error creating profile:", err);
-        throw new Error(errorMessage, { cause: err });
       } finally {
         setProfileLoading(false);
       }
@@ -240,7 +235,6 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to update profile";
       setProfileError(errorMessage);
       console.error("Error updating profile:", err);
-      throw new Error(errorMessage, { cause: err });
     } finally {
       setProfileLoading(false);
     }
@@ -265,7 +259,6 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to delete profile";
       setProfileError(errorMessage);
       console.error("Error deleting profile:", err);
-      throw new Error(errorMessage, { cause: err });
     } finally {
       setProfileLoading(false);
     }
@@ -303,7 +296,6 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to verify doctor";
       setProfileError(errorMessage);
       console.error("Error verifying doctor:", err);
-      throw new Error(errorMessage, { cause: err });
     } finally {
       setProfileLoading(false);
     }

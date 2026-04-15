@@ -3,10 +3,12 @@
  */
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDoctors } from "../../hooks/useDoctors";
 import { Card, StatusChip, Spinner, Button } from "../../components/ui";
 
 export const DoctorDashboard = ({ onNavigate }) => {
+  const navigate = useNavigate();
   const {
     myProfile,
     fetchMyProfile,
@@ -62,6 +64,28 @@ export const DoctorDashboard = ({ onNavigate }) => {
     }
 
     if (profileError) {
+      // Check if it's a "not found" error - show Create Profile option
+      if (
+        profileError.includes("not found") ||
+        profileError.includes("Doctor profile")
+      ) {
+        return (
+          <Card padding="lg" className="text-center space-y-4">
+            <p className="text-slate-600 font-medium">No profile found</p>
+            <p className="text-sm text-slate-500">
+              You need to create a doctor profile first
+            </p>
+            <Button
+              variant="primary"
+              onClick={() => navigate("/doctor/profile")}
+            >
+              Create Profile
+            </Button>
+          </Card>
+        );
+      }
+
+      // For other errors, show retry button
       return (
         <Card padding="lg" className="bg-red-50 border border-red-200">
           <div className="space-y-3">
