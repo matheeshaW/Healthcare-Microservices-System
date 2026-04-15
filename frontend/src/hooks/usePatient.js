@@ -3,7 +3,8 @@ import {
   getProfile,
   updateProfile,
   getReports,
-  uploadReport
+  uploadReport,
+  deleteReport
 } from "../api/patient.api";
 
 export const usePatient = () => {
@@ -69,6 +70,18 @@ export const usePatient = () => {
     }
   };
 
+  const deletePatientReport = async (id) => {
+    try {
+      setLoading(true);
+      await deleteReport(id);
+      setReports(prev => prev.filter(r => r._id !== id));
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     profile,
     reports,
@@ -77,6 +90,7 @@ export const usePatient = () => {
     fetchProfile,
     saveProfile,
     fetchReports,
-    addReport
+    addReport,
+    deletePatientReport
   };
 };

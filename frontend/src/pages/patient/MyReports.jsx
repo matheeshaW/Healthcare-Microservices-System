@@ -5,7 +5,13 @@ import ReportList from "../../components/patient/ReportList";
 import { Spinner } from "../../components/ui";
 
 function MyReports() {
-  const { reports, fetchReports, addReport, loading } = usePatient();
+  const {
+    reports,
+    fetchReports,
+    addReport,
+    deletePatientReport,
+    loading
+  } = usePatient();
 
   useEffect(() => {
     fetchReports();
@@ -18,7 +24,11 @@ function MyReports() {
       <h2 className="text-xl font-bold mb-4">My Reports</h2>
 
       <ReportUploader onUpload={addReport} />
-      <ReportList reports={reports} />
+
+      <ReportList
+        reports={reports}
+        onDelete={deletePatientReport}
+      />
     </div>
   );
 }

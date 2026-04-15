@@ -10,4 +10,7 @@ export const uploadReport = (formData) =>
     headers: { "Content-Type": "multipart/form-data" }
   });
 
+export const deleteReport = (id) =>
+  API.delete(`/reports/${id}`);
+
 export const getReports = () => API.get("/reports");
