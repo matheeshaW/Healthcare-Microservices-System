@@ -9,9 +9,24 @@ dotenv.config();
 const app = express();
 app.use(cors());
 
-if (!process.env.PATIENT_SERVICE_URL || !process.env.PAYMENT_SERVICE_URL) {
-  console.error('❌ FATAL: Required Service URLs are missing from the .env file!');
-  process.exit(1); 
+const requiredEnvVars = [
+  "PATIENT_SERVICE_URL",
+  "PAYMENT_SERVICE_URL",
+  "TELEMEDICINE_SERVICE_URL",
+  "APPOINTMENT_SERVICE_URL",
+  "DOCTOR_SERVICE_URL",
+  "NOTIFICATION_SERVICE_URL",
+  "JWT_SECRET",
+  "PORT",
+];
+
+const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error(
+    `❌ FATAL: Required environment variables are missing: ${missingVars.join(", ")}`,
+  );
+  process.exit(1);
 }
 
 /* ================= AUTH MIDDLEWARE ================= */
@@ -34,100 +49,210 @@ const authenticate = (req, res, next) => {
 /* ================= ROUTES ================= */
 
 // Public (no auth)
-app.use("/api/auth", createProxyMiddleware({
-  target: process.env.PATIENT_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/auth${path}`,
-  onError: (err, req, res) => {
-      console.error('Gateway Error: Patient Service is unreachable.', err.message);
-      res.status(502).json({ success: false, error: 'Patient Service is currently offline.' });
-  }
-}));
+app.use(
+  "/api/auth",
+  createProxyMiddleware({
+    target: process.env.PATIENT_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/auth${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Patient Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Patient Service is currently offline.",
+      });
+    },
+  }),
+);
 
 // Protected (with auth)
-app.use("/api/patient", authenticate, createProxyMiddleware({
-  target: process.env.PATIENT_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/patient${path}`,
-  onError: (err, req, res) => {
-      console.error('Gateway Error: Patient Service is unreachable.', err.message);
-      res.status(502).json({ success: false, error: 'Patient Service is currently offline.' });
-  }
-}));
+app.use(
+  "/api/patient",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.PATIENT_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/patient${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Patient Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Patient Service is currently offline.",
+      });
+    },
+  }),
+);
 
-app.use("/api/admin", authenticate, createProxyMiddleware({
-  target: process.env.PATIENT_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/admin${path}`,
-  onError: (err, req, res) => {
-      console.error('Gateway Error: Patient Service is unreachable.', err.message);
-      res.status(502).json({ success: false, error: 'Patient Service is currently offline.' });
-  }
-}));
+app.use(
+  "/api/admin",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.PATIENT_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/admin${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Patient Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Patient Service is currently offline.",
+      });
+    },
+  }),
+);
 
 // Payment Service Route
-app.use("/api/payment", authenticate, createProxyMiddleware({
-  target: process.env.PAYMENT_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/payment${path}`,
-  onError: (err, req, res) => {
-      console.error('Gateway Error: Payment Service is unreachable.', err.message);
-      res.status(502).json({ success: false, error: 'Payment Service is currently offline.' });
-  }
-}));
+app.use(
+  "/api/payment",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.PAYMENT_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/payment${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Payment Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Payment Service is currently offline.",
+      });
+    },
+  }),
+);
 
 // Telemedicine Service Route
-app.use("/api/telemedicine", authenticate, createProxyMiddleware({
-  target: process.env.TELEMEDICINE_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/telemedicine${path}`,
-  onError: (err, req, res) => {
-      console.error('Gateway Error: Telemedicine Service unreachable.', err.message);
-      res.status(502).json({ success: false, error: 'Telemedicine Service offline.' });
-  }
-}));
+app.use(
+  "/api/telemedicine",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.TELEMEDICINE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/telemedicine${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Telemedicine Service unreachable.",
+        err.message,
+      );
+      res
+        .status(502)
+        .json({ success: false, error: "Telemedicine Service offline." });
+    },
+  }),
+);
 
-app.use("/api/doctors", authenticate, createProxyMiddleware({
-  target: process.env.DOCTOR_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/doctors${path}`,
-  onError: (err, req, res) => {
-      console.error('Gateway Error: Doctor Service is unreachable.', err.message);
-      res.status(502).json({ success: false, error: 'Doctor Service is currently offline.' });
-  }
-}));
+app.use(
+  "/api/reports",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.PATIENT_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/reports${path}`,
+  }),
+);
 
-app.use("/api/availability", authenticate, createProxyMiddleware({
-  target: process.env.DOCTOR_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/availability${path}`,
-  onError: (err, req, res) => {
-      console.error('Gateway Error: Doctor Service is unreachable.', err.message);
-      res.status(502).json({ success: false, error: 'Doctor Service is currently offline.' });
-  }
-}));
+app.use(
+  "/api/appointments",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.APPOINTMENT_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/appointments${path}`,
+  }),
+);
 
-app.use("/api/prescriptions", authenticate, createProxyMiddleware({
-  target: process.env.DOCTOR_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/prescriptions${path}`,
-  onError: (err, req, res) => {
-      console.error('Gateway Error: Doctor Service is unreachable.', err.message);
-      res.status(502).json({ success: false, error: 'Doctor Service is currently offline.' });
-  }
-}));
+// Doctor Service Routes
+app.use(
+  "/api/doctors",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.DOCTOR_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/doctors${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Doctor Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Doctor Service is currently offline.",
+      });
+    },
+  }),
+);
 
-app.use("/api/reports", authenticate, createProxyMiddleware({
-  target: process.env.PATIENT_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/reports${path}`
-}));
+// Availability Routes
+app.use(
+  "/api/availability",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.DOCTOR_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/availability${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Doctor Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Doctor Service is currently offline.",
+      });
+    },
+  }),
+);
 
-app.use("/api/appointments", authenticate, createProxyMiddleware({
-  target: process.env.APPOINTMENT_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: (path) => `/api/appointments${path}`
-}));
+// Prescription Routes
+app.use(
+  "/api/prescriptions",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.DOCTOR_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/prescriptions${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Doctor Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Doctor Service is currently offline.",
+      });
+    },
+  }),
+);
+
+// Notification Routes
+app.use(
+  "/api/notifications",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.NOTIFICATION_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/notifications${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Notification Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Notification Service is currently offline.",
+      });
+    },
+  }),
+);
 
 /* ================= START ================= */
 app.listen(process.env.PORT, () => {
