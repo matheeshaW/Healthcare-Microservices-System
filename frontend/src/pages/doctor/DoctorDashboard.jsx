@@ -167,16 +167,6 @@ export const DoctorDashboard = ({ onNavigate }) => {
                 </div>
               </div>
             </div>
-
-            <div className="hidden md:block">
-              <Card padding="md" className="text-center w-32">
-                <div className="w-24 h-24 mx-auto bg-linear-to-br from-cyan-200 to-emerald-200 rounded-full flex items-center justify-center">
-                  <span className="text-3xl font-bold text-white">
-                    {myProfile.name.charAt(0)}
-                  </span>
-                </div>
-              </Card>
-            </div>
           </div>
         </Card>
 
