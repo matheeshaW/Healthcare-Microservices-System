@@ -85,16 +85,21 @@ export const PrescriptionForm = ({
       try {
         await onSubmit(prescriptionData);
         // Reset form on success
-        setMedicines([
-          { name: "", dosage: "", frequency: "", duration: "", notes: "" },
-        ]);
-        setDiagnosis("");
-        setNotes("");
-        setFollowUp("");
+        handleReset();
       } catch (error) {
         console.error("Error submitting prescription:", error);
       }
     }
+  };
+
+  const handleReset = () => {
+    setMedicines([
+      { name: "", dosage: "", frequency: "", duration: "", notes: "" },
+    ]);
+    setDiagnosis("");
+    setNotes("");
+    setFollowUp("");
+    setErrors({});
   };
 
   return (
@@ -377,9 +382,10 @@ export const PrescriptionForm = ({
             Issue Prescription
           </Button>
           <Button
-            type="reset"
+            type="button"
             variant="secondary"
             size="lg"
+            onClick={handleReset}
             disabled={isLoading}
           >
             Clear

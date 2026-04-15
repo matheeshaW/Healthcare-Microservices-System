@@ -230,7 +230,10 @@ export const DoctorProfile = ({ onSuccess }) => {
                   type="number"
                   value={formData.experience}
                   onChange={(e) =>
-                    handleInputChange("experience", parseInt(e.target.value))
+                    handleInputChange(
+                      "experience",
+                      e.target.value === "" ? "" : parseInt(e.target.value, 10),
+                    )
                   }
                   min="0"
                   max="100"

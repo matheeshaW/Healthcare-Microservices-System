@@ -15,6 +15,7 @@ const requiredEnvVars = [
   "TELEMEDICINE_SERVICE_URL",
   "APPOINTMENT_SERVICE_URL",
   "DOCTOR_SERVICE_URL",
+  "NOTIFICATION_SERVICE_URL",
   "JWT_SECRET",
   "PORT",
 ];
@@ -227,6 +228,27 @@ app.use(
       res.status(502).json({
         success: false,
         error: "Doctor Service is currently offline.",
+      });
+    },
+  }),
+);
+
+// Notification Routes
+app.use(
+  "/api/notifications",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.NOTIFICATION_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/notifications${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Notification Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Notification Service is currently offline.",
       });
     },
   }),

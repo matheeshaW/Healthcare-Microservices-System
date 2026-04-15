@@ -53,7 +53,6 @@ export const MyPrescriptions = () => {
     try {
       // Simulate download
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Downloaded prescription:", prescriptionId);
     } finally {
       setIsLoading(false);
     }
