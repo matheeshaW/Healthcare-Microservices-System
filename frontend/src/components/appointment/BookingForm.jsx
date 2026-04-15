@@ -19,6 +19,7 @@ function BookingForm({ onSubmit, submitting }) {
   const [slotLoading, setSlotLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -103,7 +104,7 @@ function BookingForm({ onSubmit, submitting }) {
     return () => {
       isMounted = false;
     };
-  }, [form.doctorId, form.date]);
+  }, [form.doctorId, form.date, refreshKey]);
 
   const doctorOptions = useMemo(() => {
     return doctors.map((doctor) => ({
@@ -111,6 +112,11 @@ function BookingForm({ onSubmit, submitting }) {
       label: `${doctor.name} - ${doctor.specialization}`,
     }));
   }, [doctors]);
+
+  const selectedDoctor = useMemo(
+    () => doctors.find((doctor) => doctor._id === form.doctorId) || null,
+    [doctors, form.doctorId],
+  );
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -131,14 +137,27 @@ function BookingForm({ onSubmit, submitting }) {
       await onSubmit(form);
       setSuccess("Appointment booked successfully.");
       setForm((current) => ({ ...current, time: "" }));
+      setRefreshKey((current) => current + 1);
     } catch (requestError) {
       setError(requestError.message || "Failed to create appointment");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">Book Appointment</h2>
+    <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Book Appointment</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Booking here immediately affects the doctor's visible availability.
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          <p className="font-medium text-slate-900">Available slots</p>
+          <p>{slotLoading ? "Checking..." : `${slots.length} open for this day`}</p>
+        </div>
+      </div>
 
       {error && (
         <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -150,6 +169,23 @@ function BookingForm({ onSubmit, submitting }) {
         <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           {success}
         </p>
+      )}
+
+      {selectedDoctor && (
+        <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 md:grid-cols-3">
+          <div>
+            <p className="font-medium text-slate-900">Doctor</p>
+            <p>{selectedDoctor.name}</p>
+          </div>
+          <div>
+            <p className="font-medium text-slate-900">Specialization</p>
+            <p>{selectedDoctor.specialization}</p>
+          </div>
+          <div>
+            <p className="font-medium text-slate-900">Hospital</p>
+            <p>{selectedDoctor.hospital || "Not provided"}</p>
+          </div>
+        </div>
       )}
 
       <div className="space-y-1">
@@ -164,7 +200,9 @@ function BookingForm({ onSubmit, submitting }) {
           disabled={doctorLoading || doctors.length === 0}
           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          {doctorOptions.length === 0 && <option value="">No doctors available</option>}
+          <option value="">
+            {doctorLoading ? "Loading doctors..." : "Select a doctor"}
+          </option>
           {doctorOptions.map((doctor) => (
             <option key={doctor.value} value={doctor.value}>
               {doctor.label}
@@ -200,18 +238,25 @@ function BookingForm({ onSubmit, submitting }) {
           disabled={slotLoading || slots.length === 0}
           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          <option value="">Select a slot</option>
+          <option value="">
+            {slotLoading ? "Loading slots..." : "Select a slot"}
+          </option>
           {slots.map((slot) => (
             <option key={slot} value={slot}>
               {slot}
             </option>
           ))}
         </select>
+        {!slotLoading && form.doctorId && slots.length === 0 && (
+          <p className="text-sm text-amber-700">
+            No free slots are available for this doctor on the selected date.
+          </p>
+        )}
       </div>
 
       <button
         type="submit"
-        disabled={submitting || doctorOptions.length === 0}
+        disabled={submitting || doctorOptions.length === 0 || !form.time}
         className="w-full rounded-lg bg-cyan-600 px-4 py-2 font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-cyan-300"
       >
         {submitting ? "Booking..." : "Create Appointment"}
