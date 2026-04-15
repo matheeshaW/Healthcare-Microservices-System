@@ -65,11 +65,33 @@ function App() {
         />
 
         <Route
+          path="/patient/profile"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <PatientProfile />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/doctor/availability"
           element={
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <ManageAvailability />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patient/reports"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <MyReports />
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -144,6 +166,12 @@ function App() {
         />
 
         {/* ADMIN ROUTE */}
+
+        <Route
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/admin"
