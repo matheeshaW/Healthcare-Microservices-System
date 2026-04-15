@@ -9,7 +9,7 @@ import { Spinner } from "../components/ui";
 
 export const ProtectedRoute = ({
   children,
-  requiredRole = null,
+  roles = null,
   fallbackPath = "/login",
 }) => {
   const { user } = useContext(AuthContext);
@@ -29,8 +29,8 @@ export const ProtectedRoute = ({
     );
   }
 
-  // If a specific role is required, check if user has it
-  if (requiredRole && user?.role !== requiredRole) {
+  // If specific roles are required, check if user has one of them
+  if (roles && !roles.includes(user?.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
@@ -39,7 +39,8 @@ export const ProtectedRoute = ({
             You don't have permission to access this page.
           </p>
           <p className="text-sm text-slate-500">
-            Required role: <span className="font-semibold">{requiredRole}</span>
+            Required role:{" "}
+            <span className="font-semibold">{roles.join(" or ")}</span>
           </p>
           <p className="text-sm text-slate-500">
             Your role:{" "}

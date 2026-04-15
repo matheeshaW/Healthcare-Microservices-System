@@ -31,7 +31,7 @@ function App() {
         <Route
           path="/doctor/dashboard"
           element={
-            <ProtectedRoute requiredRole="doctor">
+            <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <DoctorDashboard />
               </DashboardLayout>
@@ -42,7 +42,7 @@ function App() {
         <Route
           path="/doctor/profile"
           element={
-            <ProtectedRoute requiredRole="doctor">
+            <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <DoctorProfile />
               </DashboardLayout>
@@ -53,7 +53,7 @@ function App() {
         <Route
           path="/doctor/availability"
           element={
-            <ProtectedRoute requiredRole="doctor">
+            <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <ManageAvailability />
               </DashboardLayout>
@@ -64,7 +64,7 @@ function App() {
         <Route
           path="/doctor/prescriptions"
           element={
-            <ProtectedRoute requiredRole="doctor">
+            <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <MyPrescriptions />
               </DashboardLayout>
