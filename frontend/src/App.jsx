@@ -14,6 +14,7 @@ import MyReports from "./pages/patient/MyReports";
 import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientProfile from "./pages/patient/PatientProfile";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import PaymentHistory from "./pages/patient/PaymentHistory";
 
 // Merged Imports: Both Telemedicine and Admin Pages
 import VideoSession from './pages/telemedicine/VideoSession';
@@ -240,6 +241,18 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* --- Payment History Route --- */}
+<Route
+  path="/patient/payments"
+  element={
+    <ProtectedRoute roles={["patient"]}>
+      <DashboardLayout userRole="patient">
+        <PaymentHistory />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
+        
 
         {/* 404 Catch-All */}
         <Route

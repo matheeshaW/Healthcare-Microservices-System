@@ -54,14 +54,15 @@ export const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/30 backdrop-blur-[1px] flex items-center justify-center z-50"
+      className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-[1px] overflow-y-auto p-4 md:p-6"
       onClick={handleBackdropClick}
       {...props}
     >
       <div
         className={`
           bg-white rounded-xl shadow-2xl
-          w-full mx-4
+          w-full mx-auto my-auto
+          max-h-[92vh] flex flex-col
           transform transition-all
           ${sizeStyles[size]}
           ${className}
@@ -73,7 +74,7 @@ export const Modal = ({
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+          <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-200">
             <h2 id={titleId} className="text-xl font-bold text-slate-900">
               {title}
             </h2>
@@ -100,11 +101,11 @@ export const Modal = ({
         )}
 
         {/* Content */}
-        <div className="px-6 py-4">{children}</div>
+        <div className="px-6 py-4 overflow-y-auto">{children}</div>
 
         {/* Actions */}
         {actions && (
-          <div className="flex gap-3 px-6 py-4 border-t border-slate-200 justify-end">
+          <div className="shrink-0 flex gap-3 px-6 py-4 border-t border-slate-200 justify-end">
             {actions}
           </div>
         )}

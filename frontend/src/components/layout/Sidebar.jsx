@@ -31,13 +31,38 @@ export function Sidebar({
 
     const patientMenu = [
       { label: "Home", icon: "grid", path: "/home", badge: null },
-      { label: "Patient Dashboard", icon: "grid", path: "/patient/dashboard", badge: null },
-      { label: "My Profile", icon: "user", path: "/patient/profile", badge: null },
-      { label: "My Appointments", icon: "clock", path: "/appointment/my", badge: null },
-      { label: "Book Appointment", icon: "calendar", path: "/appointment/book", badge: null },
-      { label: "My Reports", icon: "document", path: "/patient/reports", badge: null },
-      { label: "Payment History", icon: "clock", path: "/patient/payments", badge: null },
-      { label: "Telemedicine", icon: "video", path: "/telemedicine", badge: null },
+
+      {
+        label: "Patient Dashboard",
+        icon: "grid",
+        path: "/patient/dashboard",
+        badge: null,
+      },
+      {
+        label: "My Profile",
+        icon: "user",
+        path: "/patient/profile",
+        badge: null,
+      },
+      {
+        label: "My Appointments",
+        icon: "clock",
+        path: "/appointment/my",
+        badge: null,
+      },
+      {
+        label: "Book Appointment",
+        icon: "calendar",
+        path: "/appointment/book",
+        badge: null,
+      },
+      {
+        label: "My Reports",
+        icon: "document",
+        path: "/patient/reports",
+        badge: null,
+      },
+      { label: "Payment History", icon: "chart", path: "/patient/payments", badge: null },
     ];
 
     const adminMenu = [
@@ -120,7 +145,16 @@ export function Sidebar({
         <div className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onClick={onClose}></div>
       )}
 
-      <aside className={`fixed md:sticky top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white border-r border-slate-200 overflow-y-auto transition-transform duration-300 z-40 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed md:sticky top-16 left-0 h-[calc(100vh-4rem)]
+          w-64 bg-white border-r border-slate-200
+          overflow-y-auto transition-transform duration-300 z-30
+          ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        `}
+      >
+        {/* Sidebar Header */}
         <div className="p-6 border-b border-slate-200">
           <h3 className="text-lg font-bold text-slate-900">
             {user?.role === "doctor" && "Doctor Portal"}

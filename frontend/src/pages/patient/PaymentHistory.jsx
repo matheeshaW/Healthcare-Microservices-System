@@ -23,8 +23,8 @@ function PaymentHistory() {
   }, [user]);
 
   return (
-<div className="p-4 md:p-8">
-    <h1 className="text-2xl font-bold mb-6 text-slate-900">Your Payment History</h1>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Your Payment History</h1>
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead className="bg-slate-50 border-b border-slate-200">
