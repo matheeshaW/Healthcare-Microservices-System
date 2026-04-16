@@ -21,6 +21,11 @@ import DoctorProfile from "./pages/doctor/DoctorProfile";
 import ManageAvailability from "./pages/doctor/ManageAvailability";
 import MyPrescriptions from "./pages/doctor/MyPrescriptions";
 
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserList from "./pages/admin/UserList";
+import DoctorVerification from "./pages/admin/DoctorVerification";
+
 function App() {
   return (
     <BrowserRouter>
@@ -100,17 +105,47 @@ function App() {
         />
 
         <Route
-          path="/admin"
+          path="/admin/dashboard"
           element={
             <ProtectedRoute roles={["admin"]}>
-              <DashboardLayout>
-                <h1>Admin Dashboard</h1>
+              <DashboardLayout userRole="admin">
+                <AdminDashboard />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
 
-        
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <UserList />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/verify-doctors"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <DoctorVerification />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <Navigate to="/admin/dashboard" replace />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/home"
           element={
