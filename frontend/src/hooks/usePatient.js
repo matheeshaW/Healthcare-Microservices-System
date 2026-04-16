@@ -60,6 +60,7 @@ export const usePatient = () => {
 
       const formData = new FormData();
       formData.append("file", file);
+      if (metadata.name) formData.append("name", metadata.name);
       if (metadata.category) formData.append("category", metadata.category);
       if (metadata.notes) formData.append("notes", metadata.notes);
 

@@ -15,7 +15,10 @@ function ReportList({ reports, onDelete }) {
         <Card key={r._id} className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between" border shadow="sm">
 
           <div className="min-w-0">
-            <p className="truncate font-semibold text-slate-900">{r.originalName}</p>
+            <p className="truncate font-semibold text-slate-900">{r.name || r.originalName}</p>
+            {r.originalName && (
+              <p className="mt-1 truncate text-xs text-slate-500">File: {r.originalName}</p>
+            )}
 
             <div className="mt-2 flex flex-wrap gap-2">
               <Badge variant="info">Report</Badge>
