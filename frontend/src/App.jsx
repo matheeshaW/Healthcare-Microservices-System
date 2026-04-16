@@ -15,6 +15,11 @@ import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientProfile from "./pages/patient/PatientProfile";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserList from "./pages/admin/UserList";
+import DoctorVerification from "./pages/admin/DoctorVerification";
+
 function App() {
   return (
     <BrowserRouter>
@@ -23,10 +28,22 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        <Route path="/profile" element={<Navigate to="/patient/profile" replace />} />
-        <Route path="/reports" element={<Navigate to="/patient/reports" replace />} />
-        <Route path="/appointments" element={<Navigate to="/appointment/my" replace />} />
-        <Route path="/patient/appointments" element={<Navigate to="/appointment/my" replace />} />
+        <Route
+          path="/profile"
+          element={<Navigate to="/patient/profile" replace />}
+        />
+        <Route
+          path="/reports"
+          element={<Navigate to="/patient/reports" replace />}
+        />
+        <Route
+          path="/appointments"
+          element={<Navigate to="/appointment/my" replace />}
+        />
+        <Route
+          path="/patient/appointments"
+          element={<Navigate to="/appointment/my" replace />}
+        />
         <Route path="/dashboard" element={<Navigate to="/home" replace />} />
 
         <Route
@@ -151,12 +168,43 @@ function App() {
         />
 
         <Route
-          path="/admin"
+          path="/admin/dashboard"
           element={
             <ProtectedRoute roles={["admin"]}>
               <DashboardLayout userRole="admin">
-                <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+                <AdminDashboard />
               </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <UserList />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/verify-doctors"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <DoctorVerification />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <Navigate to="/admin/dashboard" replace />
             </ProtectedRoute>
           }
         />

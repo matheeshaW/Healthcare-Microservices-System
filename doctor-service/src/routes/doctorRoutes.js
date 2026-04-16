@@ -3,7 +3,14 @@ const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const doctorController = require("../controllers/doctorController");
 
-// all routes require authentication
+/**
+ * POST /api/doctors/register
+ * Register new doctor (NO AUTH REQUIRED)
+ * Called during user registration from frontend
+ */
+router.post("/register", doctorController.registerDoctor);
+
+// All other routes require authentication
 router.use(authMiddleware);
 
 /**
