@@ -1,4 +1,4 @@
-import API from "./axios";
+import API, { APINoAuth } from "./axios";
 
 /**
  * Doctor API Service
@@ -90,6 +90,31 @@ export const createDoctorProfile = async (profileData) => {
     return response.data;
   } catch (error) {
     throw createApiError(error, "Failed to create doctor profile");
+  }
+};
+
+/**
+ * Register new doctor (called during user registration)
+ * Does not require authentication
+ * @param {Object} registrationData
+ * @param {string} registrationData.email
+ * @param {string} registrationData.name
+ * @param {string} registrationData.specialization
+ * @param {number} registrationData.experience
+ * @param {string} registrationData.hospital
+ * @param {string} registrationData.licenseNumber
+ * @param {string} registrationData.phoneNumber
+ * @returns {Promise<Object>}
+ */
+export const registerDoctor = async (registrationData) => {
+  try {
+    const response = await APINoAuth.post(
+      "/doctors/register",
+      registrationData,
+    );
+    return response.data;
+  } catch (error) {
+    throw createApiError(error, "Failed to register doctor profile");
   }
 };
 

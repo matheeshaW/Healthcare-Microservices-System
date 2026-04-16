@@ -1,7 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const axios = require("axios");
 
 // REGISTER
 exports.register = async (req, res) => {
@@ -22,54 +21,7 @@ exports.register = async (req, res) => {
       role,
     });
 
-    // If registering as doctor, create doctor profile
-    if (userRole === "doctor") {
-      try {
-        const token = jwt.sign(
-          { id: user._id, role: userRole },
-          process.env.JWT_SECRET,
-          { expiresIn: "1d" },
-        );
-
-        const doctorServiceURL =
-          process.env.DOCTOR_SERVICE_URL || "http://localhost:5002";
-
-        await axios.post(
-          `${doctorServiceURL}/api/doctors`,
-          {
-            name,
-            specialization,
-            experience: parseInt(experience),
-            hospital,
-            licenseNumber,
-            phoneNumber,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        res.json({
-          success: true,
-          user,
-          message: "Doctor profile created. Awaiting admin verification.",
-        });
-      } catch (doctorError) {
-        console.error("Error creating doctor profile:", doctorError.message);
-        // Even if doctor profile creation fails, user is created, so we respond with success
-        // but inform about the issue
-        res.status(500).json({
-          success: false,
-          error:
-            "User created but doctor profile creation failed: " +
-            doctorError.message,
-        });
-      }
-    } else {
-      res.json({ success: true, user });
-    }
+    res.json({ success: true, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
