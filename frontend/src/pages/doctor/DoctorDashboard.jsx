@@ -9,6 +9,7 @@ import {
   getDoctorAppointments,
   updateDoctorAppointmentStatus,
 } from "../../api/doctor.api";
+import { getPatientById } from "../../api/patient.api";
 import { issuePrescription } from "../../api/prescription.api";
 import { Card, StatusChip, Spinner, Button } from "../../components/ui";
 import MyPrescriptions from "../../components/doctor/MyPrescriptions";
@@ -27,6 +28,7 @@ export const DoctorDashboard = () => {
 
   const [activeTab, setActiveTab] = useState("overview");
   const [appointments, setAppointments] = useState([]);
+  const [patientNames, setPatientNames] = useState({});
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
   const [appointmentsError, setAppointmentsError] = useState("");
   const [appointmentsRefreshKey, setAppointmentsRefreshKey] = useState(0);
@@ -65,6 +67,30 @@ export const DoctorDashboard = () => {
 
         if (isMounted) {
           setAppointments(fetchedAppointments);
+
+          // Fetch patient names for all unique patients
+          const uniquePatientIds = [
+            ...new Set(
+              fetchedAppointments.map((apt) => apt.patientId).filter(Boolean),
+            ),
+          ];
+
+          const patientNameMap = {};
+          await Promise.all(
+            uniquePatientIds.map(async (patientId) => {
+              try {
+                const response = await getPatientById(patientId);
+                patientNameMap[patientId] =
+                  response?.data?.data?.name || "Unknown Patient";
+              } catch {
+                patientNameMap[patientId] = "Unknown Patient";
+              }
+            }),
+          );
+
+          if (isMounted) {
+            setPatientNames(patientNameMap);
+          }
         }
       } catch (error) {
         if (isMounted) {
@@ -98,7 +124,7 @@ export const DoctorDashboard = () => {
       return "Unknown patient";
     }
 
-    return `Patient ${String(patientId).slice(-6)}`;
+    return patientNames[patientId] || "Unknown Patient";
   };
 
   const handleAppointmentStatusUpdate = async (appointmentId, status) => {
