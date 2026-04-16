@@ -13,8 +13,7 @@ function Home() {
     ],
     doctor: [
       { label: "Doctor Dashboard", to: "/doctor/dashboard" },
-      { label: "Manage Availability", to: "/doctor/availability" },
-      { label: "My Prescriptions", to: "/doctor/prescriptions" }
+      { label: "Manage Availability", to: "/doctor/availability" }
     ],
     admin: [
       { label: "Admin Dashboard", to: "/admin" },

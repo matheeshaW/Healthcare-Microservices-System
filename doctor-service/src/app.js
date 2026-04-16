@@ -25,11 +25,9 @@ app.use((req, res, next) => {
 // Routes
 const doctorRoutes = require("./routes/doctorRoutes");
 const availabilityRoutes = require("./routes/availabilityRoutes");
-const prescriptionRoutes = require("./routes/prescriptionRoutes");
 
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/availability", availabilityRoutes);
-app.use("/api/prescriptions", prescriptionRoutes);
 
 // health check endpoint
 app.get("/health", (req, res) => {

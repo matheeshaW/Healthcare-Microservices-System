@@ -14,7 +14,6 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
 
   const notifications = [
     { id: 1, message: "New appointment request", time: "5 min ago" },
-    { id: 2, message: "Prescription approved", time: "1 hour ago" },
     { id: 3, message: "Profile verification completed", time: "2 hours ago" },
   ];
 

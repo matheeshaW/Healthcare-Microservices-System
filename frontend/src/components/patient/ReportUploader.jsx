@@ -7,7 +7,7 @@ function ReportUploader({ onUpload }) {
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const categories = ["Lab", "Imaging", "Prescription", "Discharge", "Other"];
+  const categories = ["Lab", "Imaging", "Discharge", "Other"];
 
   const handleUpload = async () => {
     if (!file) {

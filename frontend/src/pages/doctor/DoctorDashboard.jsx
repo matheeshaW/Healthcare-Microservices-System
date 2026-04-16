@@ -387,7 +387,7 @@ export const DoctorDashboard = () => {
           Doctor Dashboard
         </h1>
         <p className="text-slate-600">
-          Welcome! Manage your profile, appointments, and prescriptions
+          Welcome! Manage your profile and appointments
         </p>
       </div>
 
