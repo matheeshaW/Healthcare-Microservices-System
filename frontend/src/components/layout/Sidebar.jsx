@@ -81,6 +81,7 @@ export function Sidebar({
         path: "/patient/reports",
         badge: null,
       },
+      { label: "Payment History", icon: "chart", path: "/patient/payments", badge: null },
     ];
 
     const adminMenu = [

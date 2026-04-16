@@ -1,19 +1,77 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, useContext, useCallback } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import AppointmentList from "../../components/appointment/AppointmentList";
 import useAppointments from "../../hooks/useAppointments";
 import { getDoctorById } from "../../api/appointment.api";
+import { AuthContext } from "../../context/AuthContext";
+import { createCheckoutSession, confirmPaymentToDB } from "../../api/payment.api";
 
 function MyAppointments() {
+  const { user } = useContext(AuthContext);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
   const { appointments, loading, error, fetchMine, cancelMine, cancellingId } = useAppointments();
+  
   const [doctorNames, setDoctorNames] = useState({});
   const [notice, setNotice] = useState("");
+  const [payingId, setPayingId] = useState(null);
+  const [paidAppointmentIds, setPaidAppointmentIds] = useState([]); 
+
+
+  const fetchPaymentStatus = useCallback(async () => {
+    if (!user) return;
+    try {
+      const userId = user._id || user.id;
+      const res = await fetch(`http://localhost:5005/api/payment/history/${userId}`);
+      const data = await res.json();
+      if (data.success) {
+        const paidIds = data.data.map((payment) => payment.appointmentId);
+        setPaidAppointmentIds(paidIds);
+      }
+    } catch (err) {
+      console.error("Error fetching payment history:", err);
+    }
+  }, [user]);
+
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    const appointmentId = searchParams.get("appointmentId");
+
+    if (paymentStatus === "success" && appointmentId && user) {
+      const finalizeTransaction = async () => {
+        try {
+          setNotice("Verifying payment and generating receipt...");
+          
+          await confirmPaymentToDB({
+            appointmentId: appointmentId,
+            patientId: user._id || user.id,
+            patientEmail: user.email,
+            amount: 2500 
+          });
+
+          // Redirect to the new Payment History page
+          navigate("/patient/payments?status=success");
+        } catch (err) {
+          console.error(err);
+          setNotice("Payment confirmed, but history update failed.");
+        }
+      };
+      finalizeTransaction();
+    } else if (paymentStatus === "cancelled") {
+      setNotice("Payment was cancelled.");
+      setSearchParams({});
+    }
+  }, [searchParams, user, navigate, setSearchParams]);
+
 
   useEffect(() => {
     let isMounted = true;
 
     const loadAppointments = async () => {
       const result = await fetchMine();
+      await fetchPaymentStatus(); // Also fetch payment history
 
       if (!isMounted || result.length === 0) {
         if (isMounted) {
@@ -45,7 +103,8 @@ function MyAppointments() {
     return () => {
       isMounted = false;
     };
-  }, [fetchMine]);
+  }, [fetchMine, fetchPaymentStatus]);
+
 
   const handleCancel = async (appointmentId) => {
     const shouldCancel = window.confirm("Cancel this appointment?");
@@ -56,12 +115,32 @@ function MyAppointments() {
 
     try {
       await cancelMine(appointmentId);
-      setNotice("Appointment cancelled. The doctor's time slot can be available again.");
+      setNotice("Appointment cancelled successfully.");
     } catch {
       // Hook already stores error state used below.
     }
   };
 
+
+  const handlePayment = async (appointmentId) => {
+    try {
+      setPayingId(appointmentId);
+      setNotice("");
+      
+      const data = await createCheckoutSession(appointmentId);
+      
+      if (data.url) {
+        window.location.href = data.url; 
+      }
+    } catch (err) {
+      console.error(err);
+      setNotice("Payment service is currently unavailable.");
+    } finally {
+      setPayingId(null);
+    }
+  };
+
+ 
   const upcomingCount = appointments.filter((item) => item.status !== "cancelled").length;
   const cancelledCount = appointments.filter((item) => item.status === "cancelled").length;
 
@@ -120,6 +199,9 @@ function MyAppointments() {
           doctorNames={doctorNames}
           onCancel={handleCancel}
           cancellingId={cancellingId}
+          onPay={handlePayment} 
+          payingId={payingId}
+          paidAppointmentIds={paidAppointmentIds} 
         />
       )}
     </section>
