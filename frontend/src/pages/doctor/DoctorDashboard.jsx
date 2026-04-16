@@ -351,44 +351,53 @@ export const DoctorDashboard = () => {
                   <StatusChip status={appt.status} size="sm" />
                   <div className="flex flex-wrap gap-2">
                     {appt.status === "pending" && (
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        loading={updatingAppointmentId === appt._id}
-                        onClick={() =>
-                          handleAppointmentStatusUpdate(appt._id, "confirmed")
-                        }
-                      >
-                        Confirm
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          loading={updatingAppointmentId === appt._id}
+                          onClick={() =>
+                            handleAppointmentStatusUpdate(appt._id, "confirmed")
+                          }
+                        >
+                          Confirm
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          loading={updatingAppointmentId === appt._id}
+                          onClick={() =>
+                            handleAppointmentStatusUpdate(appt._id, "cancelled")
+                          }
+                        >
+                          Cancel
+                        </Button>
+                      </>
                     )}
 
-                    {(appt.status === "pending" ||
-                      appt.status === "confirmed") && (
-                      <Button
-                        size="sm"
-                        variant="success"
-                        loading={updatingAppointmentId === appt._id}
-                        onClick={() =>
-                          handleAppointmentStatusUpdate(appt._id, "completed")
-                        }
-                      >
-                        Complete
-                      </Button>
-                    )}
-
-                    {(appt.status === "pending" ||
-                      appt.status === "confirmed") && (
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        loading={updatingAppointmentId === appt._id}
-                        onClick={() =>
-                          handleAppointmentStatusUpdate(appt._id, "cancelled")
-                        }
-                      >
-                        Cancel
-                      </Button>
+                    {appt.status === "confirmed" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="success"
+                          loading={updatingAppointmentId === appt._id}
+                          onClick={() =>
+                            handleAppointmentStatusUpdate(appt._id, "completed")
+                          }
+                        >
+                          Complete
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          loading={updatingAppointmentId === appt._id}
+                          onClick={() =>
+                            handleAppointmentStatusUpdate(appt._id, "cancelled")
+                          }
+                        >
+                          Cancel
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
