@@ -157,11 +157,13 @@ services:
       APPOINTMENT_SERVICE_URL: http://appointment-service:5003
       PAYMENT_SERVICE_URL: http://payment-service:5005
       TELEMEDICINE_SERVICE_URL: http://telemedicine-service:5006
+      NOTIFICATION_SERVICE_URL: http://notification-service:5004
     depends_on:
       - patient-service
       - doctor-service
       - appointment-service
       - payment-service
+      - notification-service
       - telemedicine-service
     networks:
       - hms-network

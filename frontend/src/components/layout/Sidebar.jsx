@@ -4,7 +4,7 @@
  * Responsive design for desktop and mobile
  */
 
-import { useState, useContext } from "react";
+import { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -15,7 +15,6 @@ export function Sidebar({
 }) {
   const { user } = useContext(AuthContext);
   const location = useLocation();
-  const [activeItem, setActiveItem] = useState(0);
 
   // ============================================
   // MENU ITEMS BY ROLE
@@ -58,6 +57,13 @@ export function Sidebar({
 
     const patientMenu = [
       { label: "Home", icon: "grid", path: "/home", badge: null },
+
+      {
+        label: "Patient Dashboard",
+        icon: "grid",
+        path: "/patient/dashboard",
+        badge: null,
+      },
       {
         label: "My Profile",
         icon: "user",
@@ -65,16 +71,16 @@ export function Sidebar({
         badge: null,
       },
       {
-        label: "Find Doctors",
-        icon: "search",
-        path: "/patient/doctors",
+        label: "My Appointments",
+        icon: "clock",
+        path: "/appointment/my",
         badge: null,
       },
       {
-        label: "My Appointments",
-        icon: "clock",
-        path: "/patient/appointments",
-        badge: "2",
+        label: "Book Appointment",
+        icon: "calendar",
+        path: "/appointment/book",
+        badge: null,
       },
       {
         label: "My Reports",
@@ -88,7 +94,7 @@ export function Sidebar({
         path: "/patient/prescriptions",
         badge: null,
       },
-     { label: "Telemedicine", icon: "video", path: "/telemedicine", badge: null }, 
+      { label: "Telemedicine", icon: "video", path: "/telemedicine", badge: null }, 
     ];
 
     const adminMenu = [
@@ -304,6 +310,13 @@ export function Sidebar({
   // ============================================
 
   const getIsActive = (path) => {
+    if (path === "/appointment/my") {
+      return (
+        location.pathname === "/appointment/my" ||
+        /^\/appointment\/[^/]+$/.test(location.pathname)
+      );
+    }
+
     return location.pathname === path;
   };
 
@@ -347,7 +360,6 @@ export function Sidebar({
               key={index}
               to={item.path}
               onClick={() => {
-                setActiveItem(index);
                 onClose?.();
               }}
               className={`

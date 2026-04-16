@@ -28,6 +28,12 @@ export const StatusChip = ({
       dot: "bg-amber-500",
       label: "Pending",
     },
+    confirmed: {
+      bg: "bg-cyan-100",
+      text: "text-cyan-900",
+      dot: "bg-cyan-500",
+      label: "Confirmed",
+    },
     verified: {
       bg: "bg-cyan-100",
       text: "text-cyan-900",
