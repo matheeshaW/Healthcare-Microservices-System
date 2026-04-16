@@ -14,6 +14,7 @@ import MyReports from "./pages/patient/MyReports";
 import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientProfile from "./pages/patient/PatientProfile";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import PaymentHistory from "./pages/patient/PaymentHistory";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -208,6 +209,18 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* --- Payment History Route --- */}
+<Route
+  path="/patient/payments"
+  element={
+    <ProtectedRoute roles={["patient"]}>
+      <DashboardLayout userRole="patient">
+        <PaymentHistory />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
+        
 
         <Route
           path="*"

@@ -1,69 +1,52 @@
 import { Link } from "react-router-dom";
 import AppointmentStatusBadge from "./AppointmentStatusBadge";
 
-const formatDate = (value) => {
-  if (!value) {
-    return "N/A";
-  }
-
-  const parsedDate = new Date(value);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return value;
-  }
-
-  return parsedDate.toLocaleDateString();
-};
-
-function AppointmentCard({ appointment, doctorName, onCancel, cancelling }) {
+function AppointmentCard({ appointment, doctorName, onCancel, cancelling, onPay, payingId, paidAppointmentIds = [] }) {
   const appointmentId = appointment?._id;
   const isCancelled = appointment?.status === "cancelled";
+  const isConfirmed = appointment?.status === "confirmed";
+  
+  // 💳 Check if this specific appointment is already in our payment history
+  const isAlreadyPaid = paidAppointmentIds.includes(appointmentId);
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm mb-4">
+      <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="font-semibold text-slate-900">
-            {doctorName || "Doctor appointment"}
-          </h3>
-          <p className="text-sm text-slate-500">Patient booking record</p>
+          <h3 className="font-bold text-slate-900 text-lg">{doctorName || "Doctor"}</h3>
+          <p className="text-sm text-slate-500">Booking ID: {appointmentId}</p>
         </div>
         <AppointmentStatusBadge status={appointment?.status} />
       </div>
 
-      <dl className="mt-4 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
-        <div>
-          <dt className="font-medium text-slate-900">Date</dt>
-          <dd>{formatDate(appointment?.date)}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-900">Time</dt>
-          <dd>{appointment?.time || "N/A"}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-900">Doctor</dt>
-          <dd className="break-all">{doctorName || appointment?.doctorId || "N/A"}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-900">Payment</dt>
-          <dd className="capitalize">{appointment?.paymentStatus || "pending"}</dd>
-        </div>
-      </dl>
-
       <div className="mt-4 flex flex-wrap gap-2">
-        <Link
-          to={`/appointment/${appointmentId}`}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-        >
+        <Link to={`/appointment/${appointmentId}`} className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50">
           View Details
         </Link>
 
+        {/* 💳 Pay Now logic with "Paid" block */}
+        {isConfirmed && (
+          isAlreadyPaid ? (
+            <button disabled className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-sm font-bold cursor-not-allowed border border-slate-200">
+              ✓ Paid
+            </button>
+          ) : (
+            <button
+              onClick={() => onPay?.(appointmentId)}
+              disabled={payingId === appointmentId}
+              className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {payingId === appointmentId ? "Processing..." : "Pay Now"}
+            </button>
+          )
+        )}
+
         <button
           onClick={() => onCancel?.(appointmentId)}
-          disabled={!appointmentId || isCancelled || cancelling}
-          className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
+          disabled={isCancelled || cancelling || isAlreadyPaid} // Block cancel if paid
+          className="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 disabled:opacity-30"
         >
-          {cancelling ? "Cancelling..." : "Cancel"}
+          {cancelling ? "..." : "Cancel"}
         </button>
       </div>
     </article>
