@@ -8,15 +8,16 @@ router.use(authMiddleware);
 
 /**
  * POST /api/availability
- * Create availability slots for a doctor
+ * Create/Save availability slots for a doctor
+ * Can handle both date-based and day-based formats
  */
-router.post("/", availabilityController.createAvailability);
+router.post("/", availabilityController.saveWeeklyAvailability);
 
 /**
  * GET /api/availability/me
- * Get current doctor's availability
+ * Get current doctor's weekly availability (day-based format)
  */
-router.get("/me", availabilityController.getMyAvailability);
+router.get("/me", availabilityController.getMyWeeklyAvailability);
 
 /**
  * GET /api/availability/doctor/:doctorId
@@ -26,7 +27,7 @@ router.get("/doctor/:doctorId", availabilityController.getAvailability);
 
 /**
  * PUT /api/availability/:id
- * Update availability slots
+ * Update availability slots (for specific date-based availability)
  */
 router.put("/:id", availabilityController.updateAvailability);
 

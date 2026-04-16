@@ -16,6 +16,7 @@ function Register() {
     phoneNumber: "",
   });
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -30,10 +31,14 @@ function Register() {
   const handleRoleChange = (e) => {
     setRole(e.target.value);
     setMessage("");
+    setError("");
   };
 
   const handleRegister = async () => {
     try {
+      setError("");
+      setMessage("");
+
       const registrationData = {
         name: form.name,
         email: form.email,
@@ -109,7 +114,18 @@ function Register() {
       }
     } catch (err) {
       setMessage("");
-      alert(err?.response?.data?.message || "Registration failed");
+      const errorMessage =
+        err?.response?.data?.message || "Registration failed";
+      // Check if error is related to email being already registered
+      if (
+        errorMessage.toLowerCase().includes("email") ||
+        errorMessage.toLowerCase().includes("duplicate") ||
+        errorMessage.toLowerCase().includes("already")
+      ) {
+        setError("Email already exists");
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
@@ -230,6 +246,13 @@ function Register() {
         {message && (
           <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
             {message}
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">
+            ✕ {error}
           </div>
         )}
 
