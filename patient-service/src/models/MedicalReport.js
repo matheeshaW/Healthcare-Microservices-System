@@ -9,6 +9,10 @@ const medicalReportSchema = new mongoose.Schema({
     fileUrl: String,
     publicId: String, // for Cloudinary
     originalName: String,
+    fileType: String,
+    sizeBytes: Number,
+    category: String,
+    notes: String,
 }, {
     timestamps: true,
     versionKey: false

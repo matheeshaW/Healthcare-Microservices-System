@@ -4,11 +4,21 @@ const cloudinary = require("../config/cloudinary");
 // Upload report
 exports.uploadReport = async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ message: "File is required" });
+    }
+
+    const { category, notes } = req.body;
+
     const report = await MedicalReport.create({
       patientId: req.user.id,
       fileUrl: req.file.path,        // Cloudinary URL
       publicId: req.file.filename,  // Cloudinary ID
-      originalName: req.file.originalname
+      originalName: req.file.originalname,
+      fileType: req.file.mimetype,
+      sizeBytes: req.file.size,
+      category,
+      notes
     });
 
     res.json({
