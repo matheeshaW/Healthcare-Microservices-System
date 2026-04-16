@@ -6,7 +6,7 @@ const { authorize } = require("../middleware/roleMiddleware");
 const {
   upsertProfile,
   getProfile,
-  getUserById
+  deleteProfile
 } = require("../controllers/patientController");
 
 // Only PATIENT can access
@@ -29,6 +29,13 @@ router.get(
   authenticate,
   authorize("doctor", "admin"),
   getUserById
+);
+
+router.delete(
+  "/profile",
+  authenticate,
+  authorize("patient"),
+  deleteProfile
 );
 
 module.exports = router;

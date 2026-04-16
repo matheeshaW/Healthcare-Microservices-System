@@ -2,8 +2,9 @@
  * ManageAvailability Page
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, Button, Badge } from "../../components/ui";
+import { getMyAvailability, saveAvailability } from "../../api/doctor.api";
 
 export const ManageAvailability = () => {
   const [availability, setAvailability] = useState([
@@ -18,9 +19,11 @@ export const ManageAvailability = () => {
   ]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(null);
   const [newSlotTime, setNewSlotTime] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const daysOfWeek = [
     "Monday",
@@ -45,6 +48,46 @@ export const ManageAvailability = () => {
     "04:00 PM",
     "04:30 PM",
   ];
+
+  // Load availability from database on component mount
+  useEffect(() => {
+    const loadAvailability = async () => {
+      try {
+        setIsInitialLoading(true);
+        console.log("Loading availability from database...");
+        const data = await getMyAvailability();
+        console.log("Received data:", JSON.stringify(data, null, 2));
+
+        if (data.availability && Array.isArray(data.availability)) {
+          // Filter out days with no slots, but keep all days in the data
+          const loadedAvailability = data.availability.map((day) => ({
+            ...day,
+            slots: day.slots || [],
+          }));
+
+          console.log(
+            "Setting availability:",
+            JSON.stringify(loadedAvailability, null, 2),
+          );
+          setAvailability(loadedAvailability);
+
+          if (loadedAvailability.length > 0) {
+            setSelectedDay(loadedAvailability[0].day);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load availability:", error);
+        setErrorMessage(
+          "Failed to load your availability. Using default schedule.",
+        );
+        // Keep default availability if loading fails
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    loadAvailability();
+  }, []);
 
   const handleAddDay = () => {
     const availableDay = daysOfWeek.find(
@@ -119,14 +162,30 @@ export const ManageAvailability = () => {
   };
 
   const handleSaveAvailability = async () => {
-    setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setIsLoading(true);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      console.log(
+        "Saving availability data:",
+        JSON.stringify(availability, null, 2),
+      );
+
+      // Call API to save availability
+      const response = await saveAvailability({ availability });
+
+      console.log("Save successful:", JSON.stringify(response, null, 2));
       setSuccessMessage("Availability updated successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (error) {
       console.error("Failed to save availability:", error);
+      setErrorMessage(
+        error?.responseData?.message ||
+          error.message ||
+          "Failed to save availability",
+      );
+      setTimeout(() => setErrorMessage(""), 5000);
     } finally {
       setIsLoading(false);
     }
@@ -144,6 +203,15 @@ export const ManageAvailability = () => {
         </p>
       </div>
 
+      {/* Loading State */}
+      {isInitialLoading && (
+        <Card padding="md" className="bg-blue-50 border border-blue-200">
+          <p className="text-blue-700 font-semibold">
+            ⏳ Loading your availability...
+          </p>
+        </Card>
+      )}
+
       {/* Success Message */}
       {successMessage && (
         <Card padding="md" className="bg-emerald-50 border border-emerald-200">
@@ -151,7 +219,20 @@ export const ManageAvailability = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Error Message */}
+      {errorMessage && (
+        <Card padding="md" className="bg-red-50 border border-red-200">
+          <p className="text-red-700 font-semibold">✕ {errorMessage}</p>
+        </Card>
+      )}
+
+      <div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        style={{
+          opacity: isInitialLoading ? 0.5 : 1,
+          pointerEvents: isInitialLoading ? "none" : "auto",
+        }}
+      >
         {/* Days List */}
         <Card padding="md" className="lg:col-span-1">
           <h3 className="text-lg font-bold text-slate-900 mb-4">
@@ -306,15 +387,12 @@ export const ManageAvailability = () => {
                   </div>
                 )}
 
-                {availability.find((d) => d.day === selectedDay)?.slots.length >
-                  0 && (
-                  <button
-                    onClick={() => handleRemoveDay(selectedDay)}
-                    className="mt-4 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition w-full"
-                  >
-                    Remove Working Day
-                  </button>
-                )}
+                <button
+                  onClick={() => handleRemoveDay(selectedDay)}
+                  className="mt-4 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition w-full"
+                >
+                  Remove Working Day
+                </button>
               </Card>
             </>
           )}
@@ -337,7 +415,7 @@ export const ManageAvailability = () => {
           fullWidth
           onClick={handleSaveAvailability}
           loading={isLoading}
-          disabled={isLoading}
+          disabled={isLoading || isInitialLoading}
         >
           Save Availability
         </Button>

@@ -8,10 +8,20 @@ exports.upsertProfile = async (req, res) => {
 
     const {
       age,
+      dob,
       gender,
+      bloodGroup,
+      heightCm,
+      weightKg,
       address,
+      emergencyContact,
+      insuranceProvider,
+      insurancePolicyNumber,
       medicalHistory,
-      allergies
+      allergies,
+      chronicConditions,
+      currentMedications,
+      notes
     } = req.body;
 
     const profile = await PatientProfile.findOneAndUpdate(
@@ -19,19 +29,50 @@ exports.upsertProfile = async (req, res) => {
       {
         userId,
         age,
+        dob,
         gender,
+        bloodGroup,
+        heightCm,
+        weightKg,
         address,
+        emergencyContact,
+        insuranceProvider,
+        insurancePolicyNumber,
         medicalHistory,
-        allergies
+        allergies,
+        chronicConditions,
+        currentMedications,
+        notes
       },
       { new: true, upsert: true }
     );
 
     res.json({
       success: true,
+      message: "Profile saved successfully",
       data: profile
     });
 
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// DELETE profile
+exports.deleteProfile = async (req, res) => {
+  try {
+    const deletedProfile = await PatientProfile.findOneAndDelete({
+      userId: req.user.id
+    });
+
+    if (!deletedProfile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Profile deleted successfully"
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

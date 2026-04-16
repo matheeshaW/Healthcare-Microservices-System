@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   getProfile,
   updateProfile,
+  deleteProfile,
   getReports,
   uploadReport,
   deleteReport
@@ -53,12 +54,14 @@ export const usePatient = () => {
     }
   };
 
-  const addReport = async (file) => {
+  const addReport = async (file, metadata = {}) => {
     try {
       setLoading(true);
 
       const formData = new FormData();
       formData.append("file", file);
+      if (metadata.category) formData.append("category", metadata.category);
+      if (metadata.notes) formData.append("notes", metadata.notes);
 
       await uploadReport(formData);
 
@@ -82,6 +85,19 @@ export const usePatient = () => {
     }
   };
 
+  const deletePatientProfile = async () => {
+    try {
+      setLoading(true);
+      await deleteProfile();
+      setProfile(null);
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     profile,
     reports,
@@ -91,6 +107,7 @@ export const usePatient = () => {
     saveProfile,
     fetchReports,
     addReport,
-    deletePatientReport
+    deletePatientReport,
+    deletePatientProfile
   };
 };

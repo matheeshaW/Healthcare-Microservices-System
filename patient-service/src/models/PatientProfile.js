@@ -8,10 +8,24 @@ const patientProfileSchema = new mongoose.Schema({
     unique: true
   },
   age: Number,
+  dob: Date,
   gender: String,
+  bloodGroup: String,
+  heightCm: Number,
+  weightKg: Number,
   address: String,
+  emergencyContact: {
+    name: String,
+    relation: String,
+    phone: String
+  },
+  insuranceProvider: String,
+  insurancePolicyNumber: String,
   medicalHistory: [String],
-  allergies: [String]
+  allergies: [String],
+  chronicConditions: [String],
+  currentMedications: [String],
+  notes: String
 }, {
   timestamps: true,   // ✅ adds createdAt & updatedAt
   versionKey: false   // ✅ removes __v
