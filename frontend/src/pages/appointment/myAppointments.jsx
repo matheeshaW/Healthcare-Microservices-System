@@ -4,36 +4,64 @@ import AppointmentList from "../../components/appointment/AppointmentList";
 import useAppointments from "../../hooks/useAppointments";
 import { getDoctorById } from "../../api/appointment.api";
 import { AuthContext } from "../../context/AuthContext";
-import { createCheckoutSession, confirmPaymentToDB } from "../../api/payment.api";
+import {
+  createCheckoutSession,
+  confirmPaymentToDB,
+} from "../../api/payment.api";
 
 function MyAppointments() {
   const { user } = useContext(AuthContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  
-  const { appointments, loading, error, fetchMine, cancelMine, cancellingId } = useAppointments();
-  
+
+  const {
+    appointments,
+    loading,
+    error,
+    fetchMine,
+    cancelMine,
+    cancellingId,
+    deleteMine,
+    deletingId,
+  } = useAppointments();
+
   const [doctorNames, setDoctorNames] = useState({});
   const [notice, setNotice] = useState("");
   const [payingId, setPayingId] = useState(null);
-  const [paidAppointmentIds, setPaidAppointmentIds] = useState([]); 
-
+  const [paidAppointmentIds, setPaidAppointmentIds] = useState([]);
 
   const fetchPaymentStatus = useCallback(async () => {
     if (!user) return;
     try {
       const userId = user._id || user.id;
-      const res = await fetch(`http://localhost:5005/api/payment/history/${userId}`);
+      const res = await fetch(
+        `http://localhost:5005/api/payment/history/${userId}`,
+      );
+
+      // Check if response is ok before parsing
+      if (!res.ok) {
+        console.warn(
+          `Payment history fetch returned ${res.status}: ${res.statusText}`,
+        );
+        setPaidAppointmentIds([]);
+        return;
+      }
+
       const data = await res.json();
-      if (data.success) {
+      if (data.success && Array.isArray(data.data)) {
         const paidIds = data.data.map((payment) => payment.appointmentId);
         setPaidAppointmentIds(paidIds);
+      } else {
+        setPaidAppointmentIds([]);
       }
     } catch (err) {
-      console.error("Error fetching payment history:", err);
+      console.warn(
+        "Payment service unavailable, continuing without payment history:",
+        err,
+      );
+      setPaidAppointmentIds([]);
     }
   }, [user]);
-
 
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
@@ -43,12 +71,12 @@ function MyAppointments() {
       const finalizeTransaction = async () => {
         try {
           setNotice("Verifying payment and generating receipt...");
-          
+
           await confirmPaymentToDB({
             appointmentId: appointmentId,
             patientId: user._id || user.id,
             patientEmail: user.email,
-            amount: 2500 
+            amount: 2500,
           });
 
           // Redirect to the new Payment History page
@@ -65,7 +93,6 @@ function MyAppointments() {
     }
   }, [searchParams, user, navigate, setSearchParams]);
 
-
   useEffect(() => {
     let isMounted = true;
 
@@ -80,7 +107,9 @@ function MyAppointments() {
         return;
       }
 
-      const uniqueDoctorIds = [...new Set(result.map((item) => item.doctorId).filter(Boolean))];
+      const uniqueDoctorIds = [
+        ...new Set(result.map((item) => item.doctorId).filter(Boolean)),
+      ];
 
       const doctorEntries = await Promise.all(
         uniqueDoctorIds.map(async (doctorId) => {
@@ -105,7 +134,6 @@ function MyAppointments() {
     };
   }, [fetchMine, fetchPaymentStatus]);
 
-
   const handleCancel = async (appointmentId) => {
     const shouldCancel = window.confirm("Cancel this appointment?");
 
@@ -121,16 +149,32 @@ function MyAppointments() {
     }
   };
 
+  const handleDelete = async (appointmentId) => {
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this appointment? This action cannot be undone.",
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await deleteMine(appointmentId);
+      setNotice("Appointment deleted successfully.");
+    } catch {
+      setNotice("Failed to delete appointment.");
+    }
+  };
 
   const handlePayment = async (appointmentId) => {
     try {
       setPayingId(appointmentId);
       setNotice("");
-      
+
       const data = await createCheckoutSession(appointmentId);
-      
+
       if (data.url) {
-        window.location.href = data.url; 
+        window.location.href = data.url;
       }
     } catch (err) {
       console.error(err);
@@ -140,16 +184,21 @@ function MyAppointments() {
     }
   };
 
- 
-  const upcomingCount = appointments.filter((item) => item.status !== "cancelled").length;
-  const cancelledCount = appointments.filter((item) => item.status === "cancelled").length;
+  const upcomingCount = appointments.filter(
+    (item) => item.status !== "cancelled",
+  ).length;
+  const cancelledCount = appointments.filter(
+    (item) => item.status === "cancelled",
+  ).length;
 
   return (
     <section className="mx-auto max-w-4xl">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My Appointments</h1>
-          <p className="text-sm text-slate-600">Review and manage your scheduled visits.</p>
+          <p className="text-sm text-slate-600">
+            Review and manage your scheduled visits.
+          </p>
         </div>
 
         <Link
@@ -163,15 +212,21 @@ function MyAppointments() {
       <div className="mb-4 grid gap-3 md:grid-cols-3">
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-slate-500">Total appointments</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{appointments.length}</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">
+            {appointments.length}
+          </p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-slate-500">Active or completed</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{upcomingCount}</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">
+            {upcomingCount}
+          </p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-slate-500">Cancelled</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{cancelledCount}</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">
+            {cancelledCount}
+          </p>
         </article>
       </div>
 
@@ -199,9 +254,11 @@ function MyAppointments() {
           doctorNames={doctorNames}
           onCancel={handleCancel}
           cancellingId={cancellingId}
-          onPay={handlePayment} 
+          onPay={handlePayment}
           payingId={payingId}
-          paidAppointmentIds={paidAppointmentIds} 
+          paidAppointmentIds={paidAppointmentIds}
+          onDelete={handleDelete}
+          deletingId={deletingId}
         />
       )}
     </section>
