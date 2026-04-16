@@ -3,6 +3,7 @@ import { Button, Card } from "../ui";
 
 function ReportUploader({ onUpload }) {
   const [file, setFile] = useState(null);
+  const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -15,10 +16,16 @@ function ReportUploader({ onUpload }) {
       return;
     }
 
+    if (!name.trim()) {
+      alert("Please enter a report name");
+      return;
+    }
+
     try {
       setSubmitting(true);
-      await onUpload(file, { category, notes });
+      await onUpload(file, { name: name.trim(), category, notes });
       setFile(null);
+      setName("");
       setCategory("");
       setNotes("");
       alert("Report uploaded successfully");
@@ -39,6 +46,19 @@ function ReportUploader({ onUpload }) {
       </p>
 
       <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-sm font-semibold text-slate-700">
+            Report Name
+          </label>
+          <input
+            className={inputClass}
+            type="text"
+            placeholder="e.g. Blood Test - March 2026"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+
         <div>
           <label className="mb-1 block text-sm font-semibold text-slate-700">
             Report File
@@ -83,7 +103,7 @@ function ReportUploader({ onUpload }) {
       </div>
 
       <div className="mt-4 flex justify-end">
-        <Button onClick={handleUpload} loading={submitting} disabled={!file}>
+        <Button onClick={handleUpload} loading={submitting} disabled={!file || !name.trim()}>
           Upload Report
         </Button>
       </div>

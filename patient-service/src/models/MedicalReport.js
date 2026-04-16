@@ -6,6 +6,7 @@ const medicalReportSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    name: String,
     fileUrl: String,
     publicId: String, // for Cloudinary
     originalName: String,
