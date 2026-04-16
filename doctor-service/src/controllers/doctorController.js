@@ -322,3 +322,92 @@ exports.deleteDoctorProfile = async (req, res) => {
     });
   }
 };
+
+// Register new doctor (called from frontend during user registration)
+// Does NOT require authentication - creates initial doctor profile waiting for admin verification
+exports.registerDoctor = async (req, res) => {
+  try {
+    const {
+      userId,
+      email,
+      name,
+      specialization,
+      experience,
+      hospital,
+      licenseNumber,
+      phoneNumber,
+    } = req.body;
+
+    // Validate required fields
+    if (
+      !userId ||
+      !email ||
+      !name ||
+      !specialization ||
+      !experience ||
+      !hospital ||
+      !licenseNumber ||
+      !phoneNumber
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields.",
+      });
+    }
+
+    // Check if experience is a number
+    if (typeof experience !== "number") {
+      return res.status(400).json({
+        success: false,
+        message: "Experience must be a number.",
+      });
+    }
+
+    // Check if doctor with this email already exists
+    const existingDoctor = await Doctor.findOne({ email });
+    if (existingDoctor && existingDoctor.isActive) {
+      return res.status(400).json({
+        success: false,
+        message: "Doctor profile already exists for this email.",
+      });
+    }
+
+    // Check if license number is unique
+    const licenseDuplicate = await Doctor.findOne({ licenseNumber });
+    if (licenseDuplicate && licenseDuplicate.isActive) {
+      return res.status(400).json({
+        success: false,
+        message: "Doctor with this license number already exists.",
+      });
+    }
+
+    // Create new doctor profile (pending verification)
+    const doctor = new Doctor({
+      userId,
+      email,
+      name,
+      specialization,
+      experience,
+      hospital,
+      licenseNumber,
+      phoneNumber,
+      verified: false, // Awaiting admin verification
+      isActive: true,
+    });
+
+    await doctor.save();
+
+    res.status(201).json({
+      success: true,
+      message:
+        "Doctor profile registered successfully. Awaiting admin verification.",
+      data: doctor,
+    });
+  } catch (error) {
+    console.error("Error registering doctor:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while registering doctor profile.",
+    });
+  }
+};

@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { getSpecializations } from "../api/doctor.api";
+import { getSpecializations, registerDoctor } from "../api/doctor.api";
 
 function Register() {
   const [role, setRole] = useState("patient");
@@ -64,25 +64,45 @@ function Register() {
         }
       }
 
+      // Register user in patient service
       const response = await register(registrationData);
 
       if (role === "doctor") {
-        setMessage(
-          "✓ Registration successful! Your profile has been sent to admin for verification. You'll be able to login once verified.",
-        );
-        setForm({
-          name: "",
-          email: "",
-          password: "",
-          specialization: "",
-          experience: "",
-          hospital: "",
-          licenseNumber: "",
-          phoneNumber: "",
-        });
-        setTimeout(() => {
-          navigate("/");
-        }, 3000);
+        // Register doctor profile in doctor service
+        try {
+          await registerDoctor({
+            userId: response.user._id,
+            email: form.email,
+            name: form.name,
+            specialization: form.specialization,
+            experience: parseInt(form.experience),
+            hospital: form.hospital,
+            licenseNumber: form.licenseNumber,
+            phoneNumber: form.phoneNumber,
+          });
+
+          setMessage(
+            "✓ Registration successful! Your profile has been sent to admin for verification. You'll be able to login once verified.",
+          );
+          setForm({
+            name: "",
+            email: "",
+            password: "",
+            specialization: "",
+            experience: "",
+            hospital: "",
+            licenseNumber: "",
+            phoneNumber: "",
+          });
+          setTimeout(() => {
+            navigate("/");
+          }, 3000);
+        } catch (doctorError) {
+          console.error("Doctor profile creation failed:", doctorError);
+          setMessage(
+            "User created but doctor profile creation failed. Please contact admin.",
+          );
+        }
       } else {
         alert("Registered successfully!");
         navigate("/");
