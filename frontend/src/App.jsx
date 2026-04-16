@@ -22,6 +22,7 @@ import ManageAvailability from "./pages/doctor/ManageAvailability";
 import MyPrescriptions from "./pages/doctor/MyPrescriptions";
 
 import VideoSession from './pages/telemedicine/VideoSession';
+import TelemedicineDashboard from './pages/telemedicine/TelemedicineDashboard';
 
 function App() {
   return (
@@ -124,7 +125,15 @@ function App() {
           }
         />
       {/* Telemedicine Route */}
-        <Route path="/telemedicine/session/:id?" element={<VideoSession />} />
+<Route 
+  path="/telemedicine" 
+  element={
+    <DashboardLayout>
+      <TelemedicineDashboard />
+    </DashboardLayout>
+  } 
+/>     <Route path="/telemedicine/session/:id?" element={<VideoSession />} />
+
 
         {/* Dashboard Redirect */}
         <Route path="/dashboard" element={<Navigate to="/home" replace />} />
