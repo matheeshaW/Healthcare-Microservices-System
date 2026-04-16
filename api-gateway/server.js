@@ -109,6 +109,26 @@ app.use(
   }),
 );
 
+app.use(
+  "/api/user",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.PATIENT_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/user${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Patient Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Patient Service is currently offline.",
+      });
+    },
+  }),
+);
+
 // Payment Service Route
 app.use(
   "/api/payment",
