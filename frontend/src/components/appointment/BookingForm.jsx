@@ -5,7 +5,16 @@ import {
   searchDoctors,
 } from "../../api/appointment.api";
 
-const today = new Date().toISOString().split("T")[0];
+const formatDateInput = (date) => date.toISOString().split("T")[0];
+const MAX_BOOKING_WINDOW_DAYS = 30;
+const todayDate = new Date();
+todayDate.setHours(0, 0, 0, 0);
+const today = formatDateInput(todayDate);
+const maxBookDateValue = (() => {
+  const maxDate = new Date(todayDate);
+  maxDate.setDate(maxDate.getDate() + MAX_BOOKING_WINDOW_DAYS);
+  return formatDateInput(maxDate);
+})();
 
 function BookingForm({ onSubmit, submitting }) {
   const [doctors, setDoctors] = useState([]);
@@ -75,7 +84,7 @@ function BookingForm({ onSubmit, submitting }) {
 
         const availableSlots = availabilities
           .flatMap((entry) => entry.slots || [])
-          .filter((slot) => !slot.isBooked)
+          .filter((slot) => !slot.isBooked && slot.available !== false)
           .map((slot) => slot.time)
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b));
@@ -220,6 +229,7 @@ function BookingForm({ onSubmit, submitting }) {
           name="date"
           type="date"
           min={today}
+          max={maxBookDateValue}
           value={form.date}
           onChange={handleChange}
           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
