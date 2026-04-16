@@ -6,7 +6,6 @@ import MyAppointments from "./pages/appointment/myAppointments";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import DoctorProfile from "./pages/doctor/DoctorProfile";
 import ManageAvailability from "./pages/doctor/ManageAvailability";
-import MyPrescriptions from "./pages/doctor/MyPrescriptions";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -151,17 +150,6 @@ function App() {
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <ManageAvailability />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/doctor/prescriptions"
-          element={
-            <ProtectedRoute roles={["doctor"]}>
-              <DashboardLayout userRole="doctor">
-                <MyPrescriptions />
               </DashboardLayout>
             </ProtectedRoute>
           }

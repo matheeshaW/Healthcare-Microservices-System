@@ -8,10 +8,11 @@ exports.uploadReport = async (req, res) => {
       return res.status(400).json({ message: "File is required" });
     }
 
-    const { category, notes } = req.body;
+    const { name, category, notes } = req.body;
 
     const report = await MedicalReport.create({
       patientId: req.user.id,
+      name: name?.trim() || req.file.originalname,
       fileUrl: req.file.path,        // Cloudinary URL
       publicId: req.file.filename,  // Cloudinary ID
       originalName: req.file.originalname,
