@@ -14,6 +14,7 @@ import Home from "./pages/Home";
 // Patient Pages
 import PatientProfile from "./pages/patient/PatientProfile";
 import MyReports from "./pages/patient/MyReports";
+import PatientDashboard from "./pages/patient/PatientDashboard";
 
 // Doctor Pages
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -77,6 +78,17 @@ function App() {
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <ManageAvailability />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patient/dashboard"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <PatientDashboard />
               </DashboardLayout>
             </ProtectedRoute>
           }

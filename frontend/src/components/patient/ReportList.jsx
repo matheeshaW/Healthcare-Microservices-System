@@ -1,18 +1,41 @@
-function ReportList({ reports }) {
-  return (
-    <div>
-      {reports.map((r) => (
-        <div key={r._id} className="p-3 border mb-2">
-          <p>{r.originalName}</p>
+import { Card, Button, Badge } from "../ui";
 
-          <a
-            href={r.fileUrl}
-            target="_blank"
-            className="text-blue-500"
-          >
-            View
-          </a>
-        </div>
+function ReportList({ reports, onDelete }) {
+  return (
+    <div className="grid gap-4">
+      {reports.map((r) => (
+        <Card key={r._id} className="flex justify-between items-center">
+
+          <div>
+            <p className="font-semibold">{r.originalName}</p>
+
+            <div className="flex gap-2 mt-1">
+              <Badge variant="info">Report</Badge>
+              <Badge variant="default">
+                {new Date(r.createdAt).toLocaleDateString()}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <a
+              href={r.fileUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Button size="sm">View</Button>
+            </a>
+
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => onDelete(r._id)}
+            >
+              Delete
+            </Button>
+          </div>
+
+        </Card>
       ))}
     </div>
   );

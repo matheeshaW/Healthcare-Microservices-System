@@ -7,7 +7,8 @@ const { authorize } = require("../middleware/roleMiddleware");
 
 const {
   uploadReport,
-  getReports
+  getReports,
+  deleteReport
 } = require("../controllers/reportController");
 
 // Upload (patient only)
@@ -25,6 +26,14 @@ router.get(
   authenticate,
   authorize("patient"),
   getReports
+);
+
+// Delete report
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("patient"),
+  deleteReport
 );
 
 module.exports = router;

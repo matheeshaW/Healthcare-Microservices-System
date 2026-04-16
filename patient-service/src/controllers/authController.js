@@ -6,20 +6,12 @@ const axios = require("axios");
 // REGISTER
 exports.register = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      role,
-      specialization,
-      experience,
-      hospital,
-      licenseNumber,
-      phoneNumber,
-    } = req.body;
+    const { name, email, password, role } = req.body;
 
-    // Default role to patient if not provided
-    const userRole = role || "patient";
+    const allowedRoles = ["patient", "doctor", "admin"];
+    if (role && !allowedRoles.includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -27,7 +19,7 @@ exports.register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: userRole,
+      role,
     });
 
     // If registering as doctor, create doctor profile
