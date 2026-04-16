@@ -5,6 +5,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDoctors } from "../../hooks/useDoctors";
+import {
+  getDoctorAppointments,
+  updateDoctorAppointmentStatus,
+} from "../../api/doctor.api";
 import { Card, StatusChip, Spinner, Button } from "../../components/ui";
 
 export const DoctorDashboard = () => {
@@ -19,37 +23,88 @@ export const DoctorDashboard = () => {
   } = useDoctors();
 
   const [activeTab, setActiveTab] = useState("overview");
+  const [appointments, setAppointments] = useState([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [appointmentsError, setAppointmentsError] = useState("");
+  const [appointmentsRefreshKey, setAppointmentsRefreshKey] = useState(0);
+  const [updatingAppointmentId, setUpdatingAppointmentId] = useState("");
 
   useEffect(() => {
     fetchMyProfile();
   }, [fetchMyProfile]);
 
-  const mockAppointments = [
-    {
-      id: 1,
-      patientName: "John Doe",
-      date: "2024-05-20",
-      time: "10:00 AM",
-      status: "completed",
-      reason: "Cardiac Checkup",
-    },
-    {
-      id: 2,
-      patientName: "Jane Smith",
-      date: "2024-05-21",
-      time: "02:30 PM",
-      status: "scheduled",
-      reason: "Follow-up",
-    },
-    {
-      id: 3,
-      patientName: "Bob Wilson",
-      date: "2024-05-22",
-      time: "11:00 AM",
-      status: "cancelled",
-      reason: "Regular Checkup",
-    },
-  ];
+  useEffect(() => {
+    if (activeTab !== "appointments") {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadAppointments = async () => {
+      setAppointmentsLoading(true);
+      setAppointmentsError("");
+
+      try {
+        const response = await getDoctorAppointments();
+        if (isMounted) {
+          setAppointments(response?.data || []);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setAppointmentsError(error.message || "Failed to fetch appointments");
+        }
+      } finally {
+        if (isMounted) {
+          setAppointmentsLoading(false);
+        }
+      }
+    };
+
+    loadAppointments();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, appointmentsRefreshKey]);
+
+  const formatDate = (value) => {
+    if (!value) {
+      return "N/A";
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
+  };
+
+  const formatPatientLabel = (patientId) => {
+    if (!patientId) {
+      return "Unknown patient";
+    }
+
+    return `Patient ${String(patientId).slice(-6)}`;
+  };
+
+  const handleAppointmentStatusUpdate = async (appointmentId, status) => {
+    setUpdatingAppointmentId(appointmentId);
+    setAppointmentsError("");
+
+    try {
+      const response = await updateDoctorAppointmentStatus(appointmentId, status);
+      const updatedAppointment = response?.data;
+
+      setAppointments((current) =>
+        current.map((appointment) =>
+          appointment._id === appointmentId
+            ? { ...appointment, ...(updatedAppointment || {}), status }
+            : appointment,
+        ),
+      );
+    } catch (error) {
+      setAppointmentsError(error.message || "Failed to update appointment status");
+    } finally {
+      setUpdatingAppointmentId("");
+    }
+  };
 
   const renderProfileSection = () => {
     if (profileLoading) {
@@ -213,45 +268,115 @@ export const DoctorDashboard = () => {
   };
 
   const renderAppointmentsTab = () => {
+    if (appointmentsLoading) {
+      return (
+        <Card padding="md" className="text-center">
+          <Spinner size="lg" variant="primary" label="Loading appointments..." />
+        </Card>
+      );
+    }
+
+    if (appointmentsError) {
+      return (
+        <Card padding="md" className="border border-red-200 bg-red-50">
+          <div className="space-y-3">
+            <p className="font-semibold text-red-700">{appointmentsError}</p>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setAppointmentsRefreshKey((current) => current + 1)}
+            >
+              Retry
+            </Button>
+          </div>
+        </Card>
+      );
+    }
+
     return (
       <Card padding="md">
         <h3 className="text-lg font-bold text-slate-900 mb-4">
-          Recent Appointments
+          Real Patient Appointments
         </h3>
 
+        {appointments.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-slate-600">
+            No patient bookings yet for this doctor.
+          </div>
+        ) : (
         <div className="space-y-3">
-          {mockAppointments.map((appt) => (
+          {appointments.map((appt) => (
             <div
-              key={appt.id}
+              key={appt._id}
               className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
             >
               <div className="flex-1">
                 <p className="font-semibold text-slate-900">
-                  {appt.patientName}
+                  {formatPatientLabel(appt.patientId)}
                 </p>
                 <p className="text-sm text-slate-600">
-                  {appt.date} at {appt.time}
+                  {formatDate(appt.date)} at {appt.time}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">{appt.reason}</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Appointment ID: {appt._id}
+                </p>
               </div>
 
               <div className="flex items-center gap-3">
                 <StatusChip status={appt.status} size="sm" />
-                <button className="px-3 py-1.5 text-sm font-semibold text-cyan-600 hover:bg-cyan-50 rounded-lg transition">
-                  View
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  {appt.status === "pending" && (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      loading={updatingAppointmentId === appt._id}
+                      onClick={() =>
+                        handleAppointmentStatusUpdate(appt._id, "confirmed")
+                      }
+                    >
+                      Confirm
+                    </Button>
+                  )}
+
+                  {(appt.status === "pending" || appt.status === "confirmed") && (
+                    <Button
+                      size="sm"
+                      variant="success"
+                      loading={updatingAppointmentId === appt._id}
+                      onClick={() =>
+                        handleAppointmentStatusUpdate(appt._id, "completed")
+                      }
+                    >
+                      Complete
+                    </Button>
+                  )}
+
+                  {(appt.status === "pending" || appt.status === "confirmed") && (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      loading={updatingAppointmentId === appt._id}
+                      onClick={() =>
+                        handleAppointmentStatusUpdate(appt._id, "cancelled")
+                      }
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
+        )}
 
         <Button
           variant="secondary"
           fullWidth
           className="mt-4"
-          onClick={() => setActiveTab("appointments")}
+          onClick={() => setActiveTab("overview")}
         >
-          View All Appointments
+          Back to Overview
         </Button>
       </Card>
     );
