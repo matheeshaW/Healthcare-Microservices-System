@@ -80,7 +80,9 @@ export const getDoctorAppointments = async () => {
  */
 export const updateDoctorAppointmentStatus = async (appointmentId, status) => {
   try {
-    const response = await API.put(`/appointments/${appointmentId}/status`, { status });
+    const response = await API.put(`/appointments/${appointmentId}/status`, {
+      status,
+    });
     return response.data;
   } catch (error) {
     throw createApiError(error, "Failed to update appointment status");
@@ -206,6 +208,59 @@ export const getSpecializations = () => {
     "General Medicine",
     "Dentistry",
   ];
+};
+
+/**
+ * Get current doctor's availability (weekly format with day names)
+ * @returns {Promise<Object>}
+ */
+export const getMyAvailability = async () => {
+  try {
+    const response = await API.get("/availability/me");
+    return response.data;
+  } catch (error) {
+    throw createApiError(error, "Failed to fetch your availability");
+  }
+};
+
+/**
+ * Save or update doctor availability (weekly day-based format)
+ * @param {Object} availabilityData
+ * @param {Array} availabilityData.availability - Array of days with slots
+ * @example
+ * {
+ *   availability: [
+ *     { day: "Monday", slots: [{ time: "09:00 AM", available: true }] },
+ *     { day: "Tuesday", slots: [] }
+ *   ]
+ * }
+ * @returns {Promise<Object>}
+ */
+export const saveAvailability = async (availabilityData) => {
+  try {
+    const response = await API.post("/availability", availabilityData);
+    return response.data;
+  } catch (error) {
+    throw createApiError(error, "Failed to save availability");
+  }
+};
+
+/**
+ * Update specific availability record (date-based)
+ * @param {string} availabilityId
+ * @param {Object} updateData
+ * @returns {Promise<Object>}
+ */
+export const updateAvailability = async (availabilityId, updateData) => {
+  try {
+    const response = await API.put(
+      `/availability/${availabilityId}`,
+      updateData,
+    );
+    return response.data;
+  } catch (error) {
+    throw createApiError(error, "Failed to update availability");
+  }
 };
 
 /**

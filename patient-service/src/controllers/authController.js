@@ -23,6 +23,15 @@ exports.register = async (req, res) => {
 
     res.json({ success: true, user });
   } catch (err) {
+    // Handle duplicate email error
+    if (err.code === 11000 && err.keyPattern?.email) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+    // Handle validation errors
+    if (err.name === "ValidationError") {
+      const messages = Object.values(err.errors).map((e) => e.message);
+      return res.status(400).json({ message: messages.join(", ") });
+    }
     res.status(500).json({ error: err.message });
   }
 };
