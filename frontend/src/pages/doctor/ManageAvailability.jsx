@@ -306,15 +306,12 @@ export const ManageAvailability = () => {
                   </div>
                 )}
 
-                {availability.find((d) => d.day === selectedDay)?.slots.length >
-                  0 && (
-                  <button
-                    onClick={() => handleRemoveDay(selectedDay)}
-                    className="mt-4 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition w-full"
-                  >
-                    Remove Working Day
-                  </button>
-                )}
+                <button
+                  onClick={() => handleRemoveDay(selectedDay)}
+                  className="mt-4 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition w-full"
+                >
+                  Remove Working Day
+                </button>
               </Card>
             </>
           )}
