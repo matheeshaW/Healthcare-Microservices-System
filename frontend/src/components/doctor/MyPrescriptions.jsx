@@ -5,10 +5,12 @@ import {
   updatePrescriptionStatus,
   removePrescription,
 } from "../../api/prescription.api";
+import { getPatientById } from "../../api/patient.api";
 import { Card, Button, Spinner } from "../../components/ui";
 
 export const MyPrescriptions = () => {
   const [prescriptions, setPrescriptions] = useState([]);
+  const [patientNames, setPatientNames] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState(null);
@@ -32,6 +34,26 @@ export const MyPrescriptions = () => {
     try {
       const data = await getMyPrescriptions();
       setPrescriptions(data || []);
+
+      // Fetch patient names for all unique patients
+      const uniquePatientIds = [
+        ...new Set((data || []).map((p) => p.patientId).filter(Boolean)),
+      ];
+
+      const patientNameMap = {};
+      await Promise.all(
+        uniquePatientIds.map(async (patientId) => {
+          try {
+            const response = await getPatientById(patientId);
+            patientNameMap[patientId] =
+              response?.data?.data?.name || "Unknown Patient";
+          } catch {
+            patientNameMap[patientId] = "Unknown Patient";
+          }
+        }),
+      );
+
+      setPatientNames(patientNameMap);
     } catch (err) {
       setError(
         typeof err === "string"
@@ -290,7 +312,8 @@ export const MyPrescriptions = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className="font-semibold text-slate-900">
-                      Patient {String(prescription.patientId).slice(-6)}
+                      {patientNames[prescription.patientId] ||
+                        "Unknown Patient"}
                     </p>
                     <p className="text-sm text-slate-600">
                       {formatDate(prescription.createdAt)}
@@ -339,8 +362,9 @@ export const MyPrescriptions = () => {
                         Edit Prescription
                       </h4>
                       <p className="text-sm text-slate-600">
-                        Update prescription details for Patient{" "}
-                        {String(prescription.patientId).slice(-6)}
+                        Update prescription details for{" "}
+                        {patientNames[prescription.patientId] ||
+                          "Unknown Patient"}
                       </p>
                     </div>
 
