@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import {
   cancelAppointment,
   createAppointment,
+  deleteAppointment,
   getApiErrorMessage,
   getMyAppointmentById,
   getMyAppointments,
@@ -13,6 +14,7 @@ function useAppointments() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cancellingId, setCancellingId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
 
   const clearError = useCallback(() => {
     setError("");
@@ -100,16 +102,39 @@ function useAppointments() {
     }
   }, []);
 
+  const deleteMine = useCallback(async (appointmentId) => {
+    setDeletingId(appointmentId);
+    setError("");
+
+    try {
+      await deleteAppointment(appointmentId);
+
+      setAppointments((current) =>
+        current.filter((item) => item._id !== appointmentId),
+      );
+
+      return true;
+    } catch (requestError) {
+      const message = getApiErrorMessage(requestError);
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setDeletingId("");
+    }
+  }, []);
+
   return {
     appointments,
     loading,
     error,
     submitting,
     cancellingId,
+    deletingId,
     clearError,
     fetchMine,
     createForPatient,
     cancelMine,
+    deleteMine,
     fetchAppointmentById,
   };
 }

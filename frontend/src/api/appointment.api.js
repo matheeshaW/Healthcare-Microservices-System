@@ -31,6 +31,11 @@ export const cancelAppointment = async (appointmentId) => {
   return unwrapData(response);
 };
 
+export const deleteAppointment = async (appointmentId) => {
+  const response = await API.delete(`/appointments/${appointmentId}/delete`);
+  return unwrapData(response);
+};
+
 export const getAllAppointments = async () => {
   const response = await API.get("/appointments/admin/all");
   return unwrapData(response) || [];

@@ -9,16 +9,35 @@ function AppointmentCard({
   onPay,
   payingId,
   paidAppointmentIds = [],
+  onDelete,
+  deleting,
 }) {
   const appointmentId = appointment?._id;
+
+  // Format date helper function
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    try {
+      return new Date(date).toLocaleDateString("en-US", {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return date;
+    }
+  };
 
   // Logic from BOTH branches merged
   const status = appointment?.status;
   const isCancelled = status === "cancelled";
+  const isCompleted = status?.toLowerCase() === "completed";
   const isConfirmed = status === "confirmed";
 
   // Logic from main: define who can cancel
-  const canCancel = status === "pending" || status === "confirmed";
+  const canCancel =
+    status === "pending" || status?.toLowerCase() === "confirmed";
 
   // Logic from your payment branch
   const isAlreadyPaid = paidAppointmentIds.includes(appointmentId);
@@ -66,13 +85,24 @@ function AppointmentCard({
           View Details
         </Link>
 
-        {appointment?.status === "completed" && (
+        {(isCompleted || isConfirmed) && (
           <Link
             to={`/prescription/${appointmentId}`}
             className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700"
           >
             View Prescription
           </Link>
+        )}
+
+        {/* 🗑️ Delete Button for Completed Appointments */}
+        {isCompleted && (
+          <button
+            onClick={() => onDelete?.(appointmentId)}
+            disabled={deleting}
+            className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-sm font-medium hover:bg-red-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
         )}
 
         {/* 💳 Payment Button Logic (Member 3's requirements) */}
