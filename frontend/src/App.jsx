@@ -128,6 +128,17 @@ function App() {
         />
 
         <Route
+          path="/patient/dashboard"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <PatientDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/doctor/prescriptions"
           element={
             <ProtectedRoute roles={["doctor"]}>

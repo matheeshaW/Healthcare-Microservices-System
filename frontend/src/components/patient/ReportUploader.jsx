@@ -11,7 +11,7 @@ function ReportUploader({ onUpload }) {
     await uploadReport(formData);
 
     alert("Uploaded!");
-    onUpload();
+    onUpload(file);
   };
 
   return (

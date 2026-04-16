@@ -56,6 +56,13 @@ export function Sidebar({
 
     const patientMenu = [
       { label: "Home", icon: "grid", path: "/home", badge: null },
+
+      {
+        label: "Patient Dashboard",
+        icon: "grid",
+        path: "/patient/dashboard",
+        badge: null,
+      },
       {
         label: "My Profile",
         icon: "user",
