@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Card, Spinner, Button, Badge, Modal } from "../../components/ui";
+import { Card, Spinner, Badge, Modal } from "../../components/ui";
 import API from "../../api/axios";
 
 export const UserList = () => {

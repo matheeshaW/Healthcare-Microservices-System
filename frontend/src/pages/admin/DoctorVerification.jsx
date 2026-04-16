@@ -4,14 +4,7 @@
  */
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  Spinner,
-  Button,
-  Badge,
-  Modal,
-  StatusChip,
-} from "../../components/ui";
+import { Card, Spinner, Button, Modal, StatusChip } from "../../components/ui";
 import API from "../../api/axios";
 
 export const DoctorVerification = () => {
@@ -342,17 +335,6 @@ export const DoctorVerification = () => {
                   {formatDate(selectedDoctor.createdAt)}
                 </p>
               </div>
-
-              {selectedDoctor.verified && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
-                    Verified Date
-                  </p>
-                  <p className="text-slate-900">
-                    {formatDate(selectedDoctor.verifiedAt)}
-                  </p>
-                </div>
-              )}
             </div>
 
             <div className="flex gap-3">
