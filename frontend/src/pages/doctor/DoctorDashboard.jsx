@@ -12,6 +12,7 @@ import {
 import { issuePrescription } from "../../api/prescription.api";
 import { Card, StatusChip, Spinner, Button } from "../../components/ui";
 import MyPrescriptions from "../../components/doctor/MyPrescriptions";
+import PatientReportsModal from "../../components/doctor/PatientReportsModal";
 
 export const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export const DoctorDashboard = () => {
   const [appointmentsError, setAppointmentsError] = useState("");
   const [appointmentsRefreshKey, setAppointmentsRefreshKey] = useState(0);
   const [updatingAppointmentId, setUpdatingAppointmentId] = useState("");
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
 
   // Prescription form state
   const [expandedAppointmentId, setExpandedAppointmentId] = useState(null);
@@ -450,6 +452,13 @@ export const DoctorDashboard = () => {
 
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-2 pt-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setSelectedPatientId(appt.patientId)}
+                      >
+                        View Reports
+                      </Button>
                       {appt.status === "pending" && (
                         <Button
                           size="sm"
@@ -946,6 +955,14 @@ export const DoctorDashboard = () => {
       {activeTab === "overview" && renderProfileSection()}
       {activeTab === "appointments" && renderAppointmentsTab()}
       {activeTab === "prescriptions" && <MyPrescriptions />}
+
+      {/* Patient Reports Modal */}
+      {selectedPatientId && (
+        <PatientReportsModal
+          patientId={selectedPatientId}
+          onClose={() => setSelectedPatientId(null)}
+        />
+      )}
     </div>
   );
 };

@@ -13,20 +13,19 @@ exports.uploadReport = async (req, res) => {
     const report = await MedicalReport.create({
       patientId: req.user.id,
       name: name?.trim() || req.file.originalname,
-      fileUrl: req.file.path,        // Cloudinary URL
-      publicId: req.file.filename,  // Cloudinary ID
+      fileUrl: req.file.path, // Cloudinary URL
+      publicId: req.file.filename, // Cloudinary ID
       originalName: req.file.originalname,
       fileType: req.file.mimetype,
       sizeBytes: req.file.size,
       category,
-      notes
+      notes,
     });
 
     res.json({
       success: true,
-      data: report
+      data: report,
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -36,19 +35,45 @@ exports.uploadReport = async (req, res) => {
 exports.getReports = async (req, res) => {
   try {
     const reports = await MedicalReport.find({
-      patientId: req.user.id
+      patientId: req.user.id,
     });
 
     res.json({
       success: true,
-      data: reports
+      data: reports,
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+// Get reports for a specific patient (for doctors and other roles)
+exports.getPatientReports = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+
+    if (!patientId) {
+      return res.status(400).json({
+        success: false,
+        message: "Patient ID is required",
+      });
+    }
+
+    const reports = await MedicalReport.find({
+      patientId: patientId,
+    });
+
+    res.json({
+      success: true,
+      data: reports,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
 
 // Delete report
 
@@ -74,9 +99,8 @@ exports.deleteReport = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Report deleted"
+      message: "Report deleted",
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

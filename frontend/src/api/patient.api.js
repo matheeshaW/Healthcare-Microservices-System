@@ -8,10 +8,16 @@ export const deleteProfile = () => API.delete("/patient/profile");
 // Reports
 export const uploadReport = (formData) =>
   API.post("/reports/upload", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
+    headers: { "Content-Type": "multipart/form-data" },
   });
 
-export const deleteReport = (id) =>
-  API.delete(`/reports/${id}`);
+export const deleteReport = (id) => API.delete(`/reports/${id}`);
 
 export const getReports = () => API.get("/reports");
+
+/**
+ * Get reports for a specific patient (for doctors)
+ * @param {string} patientId - Patient ID
+ */
+export const getPatientReports = (patientId) =>
+  API.get(`/reports/patient/${patientId}`);
