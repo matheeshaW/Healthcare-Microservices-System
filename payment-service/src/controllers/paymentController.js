@@ -46,6 +46,30 @@ exports.processPayment = async (req, res) => {
 
         await newPayment.save();
 
+        // --- NEW: SERVER-TO-SERVER COMMUNICATION ---
+        // Tell your teammate's Appointment Service (Port 5000) that the payment is done!
+        try {
+            const appointmentServiceBaseUrl = process.env.APPOINTMENT_SERVICE_UPDATE_URL || 'http://localhost:5000';
+            const appointmentResponse = await fetch(`${appointmentServiceBaseUrl}/api/appointments/${appointmentId}/pay`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Forward the patient's JWT token so the Appointment Service accepts the request!
+                    'Authorization': req.headers.authorization 
+                }
+            });
+
+            if (!appointmentResponse.ok) {
+                console.error('⚠️ Failed to update Appointment Service status');
+            } else {
+                console.log('✅ Successfully notified Appointment Service to mark as Paid!');
+            }
+        } catch (fetchErr) {
+            console.error('⚠️ Could not connect to Appointment Service:', fetchErr.message);
+        }
+        // -------------------------------------------
+
+        // Trigger the Notification Service
         try {
             await sendNotification({
                 patientEmail: patientEmail, 

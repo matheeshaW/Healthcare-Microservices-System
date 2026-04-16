@@ -3,6 +3,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import AppointmentDetail from "./pages/appointment/appointmentDetail";
 import BookAppointment from "./pages/appointment/bookAppointment";
 import MyAppointments from "./pages/appointment/myAppointments";
+import PrescriptionDetail from "./pages/prescription/PrescriptionDetail";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import DoctorProfile from "./pages/doctor/DoctorProfile";
 import ManageAvailability from "./pages/doctor/ManageAvailability";
@@ -130,6 +131,17 @@ function App() {
         />
 
         {/* Doctor Routes */}
+        <Route
+          path="/prescription/:appointmentId"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <PrescriptionDetail />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/doctor/dashboard"
           element={

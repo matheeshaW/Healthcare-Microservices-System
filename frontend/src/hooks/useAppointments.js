@@ -1,10 +1,13 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   cancelAppointment,
   createAppointment,
+  deleteAppointment,
   getApiErrorMessage,
   getMyAppointmentById,
   getMyAppointments,
+  rescheduleAppointment,
+  subscribeMyAppointmentUpdates,
 } from "../api/appointment.api";
 
 function useAppointments() {
@@ -13,6 +16,9 @@ function useAppointments() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cancellingId, setCancellingId] = useState("");
+  const [reschedulingId, setReschedulingId] = useState("");
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [deletingId, setDeletingId] = useState("");
 
   const clearError = useCallback(() => {
     setError("");
@@ -32,6 +38,45 @@ function useAppointments() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeMyAppointmentUpdates({
+      onSnapshot: (snapshot) => {
+        setAppointments(snapshot);
+        setRealtimeConnected(true);
+      },
+      onUpdated: (nextAppointment) => {
+        if (!nextAppointment?._id) {
+          return;
+        }
+
+        setAppointments((current) => {
+          const index = current.findIndex(
+            (item) => item._id === nextAppointment._id,
+          );
+
+          if (index === -1) {
+            return [nextAppointment, ...current];
+          }
+
+          const updated = [...current];
+          updated[index] = {
+            ...updated[index],
+            ...nextAppointment,
+          };
+          return updated;
+        });
+      },
+      onError: () => {
+        setRealtimeConnected(false);
+      },
+    });
+
+    return () => {
+      unsubscribe();
+      setRealtimeConnected(false);
+    };
   }, []);
 
   const createForPatient = useCallback(async (payload) => {
@@ -84,6 +129,34 @@ function useAppointments() {
     }
   }, []);
 
+  const rescheduleMine = useCallback(async (appointmentId, payload) => {
+    setReschedulingId(appointmentId);
+    setError("");
+
+    try {
+      const updated = await rescheduleAppointment(appointmentId, payload);
+
+      setAppointments((current) =>
+        current.map((item) =>
+          item._id === appointmentId
+            ? {
+                ...item,
+                ...(updated || {}),
+              }
+            : item,
+        ),
+      );
+
+      return updated;
+    } catch (requestError) {
+      const message = getApiErrorMessage(requestError);
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setReschedulingId("");
+    }
+  }, []);
+
   const fetchAppointmentById = useCallback(async (appointmentId) => {
     setLoading(true);
     setError("");
@@ -100,16 +173,42 @@ function useAppointments() {
     }
   }, []);
 
+  const deleteMine = useCallback(async (appointmentId) => {
+    setDeletingId(appointmentId);
+    setError("");
+
+    try {
+      await deleteAppointment(appointmentId);
+
+      setAppointments((current) =>
+        current.filter((item) => item._id !== appointmentId),
+      );
+
+      return true;
+    } catch (requestError) {
+      const message = getApiErrorMessage(requestError);
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setDeletingId("");
+    }
+  }, []);
+
   return {
     appointments,
     loading,
     error,
     submitting,
     cancellingId,
+    reschedulingId,
+    realtimeConnected,
+    deletingId,
     clearError,
     fetchMine,
     createForPatient,
     cancelMine,
+    rescheduleMine,
+    deleteMine,
     fetchAppointmentById,
   };
 }

@@ -32,10 +32,19 @@ if (missingVars.length > 0) {
 /* ================= AUTH MIDDLEWARE ================= */
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const queryToken = typeof req.query?.token === "string" ? req.query.token : "";
 
-  if (!authHeader) return res.status(401).json({ message: "No token" });
+  if (!authHeader && !queryToken) {
+    return res.status(401).json({ message: "No token" });
+  }
 
-  const token = authHeader.split(" ")[1];
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.split(" ")[1]
+    : queryToken;
+
+  if (!token) {
+    return res.status(401).json({ message: "No token" });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -245,6 +254,27 @@ app.use(
     target: process.env.DOCTOR_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/api/availability${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Doctor Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Doctor Service is currently offline.",
+      });
+    },
+  }),
+);
+
+// Prescription Routes
+app.use(
+  "/api/prescriptions",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.DOCTOR_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/prescriptions${path}`,
     onError: (err, req, res) => {
       console.error(
         "Gateway Error: Doctor Service is unreachable.",

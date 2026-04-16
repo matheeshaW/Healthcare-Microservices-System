@@ -84,7 +84,12 @@ export function Sidebar({
         path: "/patient/reports",
         badge: null,
       },
-      { label: "Payment History", icon: "chart", path: "/patient/payments", badge: null },
+      {
+        label: "Payment History",
+        icon: "chart",
+        path: "/patient/payments",
+        badge: null,
+      },
     ];
     // Push Telemedicine to patient menu ONLY if they have paid
     if (user?.role === "patient" && hasPaidAppointments) {
@@ -97,11 +102,32 @@ export function Sidebar({
     }
 
     const adminMenu = [
-      { label: "Home", icon: "grid", path: "/home", badge: null },
-      { label: "Dashboard", icon: "grid", path: "/admin/dashboard", badge: null },
+      {
+        label: "Home",
+        icon: "grid",
+        path: "/home",
+        badge: null,
+      },
+      {
+        label: "Dashboard",
+        icon: "grid",
+        path: "/admin/dashboard",
+        badge: null,
+      },
       { label: "Users", icon: "users", path: "/admin/users", badge: null },
-      { label: "Verify Doctors", icon: "check", path: "/admin/verify-doctors", badge: null },
-      { label: "Appointments", icon: "clock", path: "/admin/appointments", badge: null },
+
+      {
+        label: "Verify Doctors",
+        icon: "check",
+        path: "/admin/verify-doctors",
+        badge: null,
+      },
+      {
+        label: "Appointments",
+        icon: "clock",
+        path: "/admin/appointments",
+        badge: null,
+      },
     ];
 
     if (user?.role === "doctor") return doctorMenu;
