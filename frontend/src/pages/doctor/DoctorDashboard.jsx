@@ -9,6 +9,7 @@ import {
   getDoctorAppointments,
   updateDoctorAppointmentStatus,
 } from "../../api/doctor.api";
+import { getPatientById } from "../../api/patient.api";
 import { issuePrescription } from "../../api/prescription.api";
 import { Card, StatusChip, Spinner, Button } from "../../components/ui";
 import MyPrescriptions from "../../components/doctor/MyPrescriptions";
@@ -31,6 +32,7 @@ export const DoctorDashboard = () => {
   const [appointmentsError, setAppointmentsError] = useState("");
   const [appointmentsRefreshKey, setAppointmentsRefreshKey] = useState(0);
   const [updatingAppointmentId, setUpdatingAppointmentId] = useState("");
+  const [patientNameById, setPatientNameById] = useState({});
   const [selectedPatientId, setSelectedPatientId] = useState(null);
 
   // Prescription form state
@@ -61,8 +63,36 @@ export const DoctorDashboard = () => {
 
       try {
         const response = await getDoctorAppointments();
+        const fetchedAppointments = response?.data || [];
+
         if (isMounted) {
-          setAppointments(response?.data || []);
+          setAppointments(fetchedAppointments);
+        }
+
+        const uniquePatientIds = [
+          ...new Set(
+            fetchedAppointments
+              .map((appointment) => appointment.patientId)
+              .filter(Boolean),
+          ),
+        ];
+
+        const patientEntries = await Promise.all(
+          uniquePatientIds.map(async (patientId) => {
+            try {
+              const patientResponse = await getPatientById(patientId);
+              return [patientId, patientResponse?.data?.data?.name || ""];
+            } catch {
+              return [patientId, ""];
+            }
+          }),
+        );
+
+        if (isMounted) {
+          setPatientNameById((current) => ({
+            ...current,
+            ...Object.fromEntries(patientEntries.filter(([, name]) => name)),
+          }));
         }
       } catch (error) {
         if (isMounted) {
@@ -96,7 +126,9 @@ export const DoctorDashboard = () => {
       return "Unknown patient";
     }
 
-    return `Patient ${String(patientId).slice(-6)}`;
+    return (
+      patientNameById[patientId] || `Patient ${String(patientId).slice(-6)}`
+    );
   };
 
   const handleAppointmentStatusUpdate = async (appointmentId, status) => {

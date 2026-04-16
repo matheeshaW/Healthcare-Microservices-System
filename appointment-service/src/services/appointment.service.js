@@ -75,7 +75,7 @@ exports.findMatchingSlot = (availabilities, date, time) => {
     }
 
     const slotIndex = availability.slots.findIndex(
-      (slot) => slot.time === time && !slot.isBooked,
+      (slot) => slot.time === time && !slot.isBooked && slot.available !== false,
     );
 
     if (slotIndex !== -1) {

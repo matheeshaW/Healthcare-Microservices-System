@@ -14,9 +14,11 @@ import MyReports from "./pages/patient/MyReports";
 import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientProfile from "./pages/patient/PatientProfile";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import PaymentHistory from "./pages/patient/PaymentHistory";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAppointments from "./pages/admin/AdminAppointments";
 import UserList from "./pages/admin/UserList";
 import DoctorVerification from "./pages/admin/DoctorVerification";
 
@@ -201,6 +203,17 @@ function App() {
         />
 
         <Route
+          path="/admin/appointments"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <AdminAppointments />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/admin"
           element={
             <ProtectedRoute roles={["admin"]}>
@@ -208,6 +221,18 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* --- Payment History Route --- */}
+<Route
+  path="/patient/payments"
+  element={
+    <ProtectedRoute roles={["patient"]}>
+      <DashboardLayout userRole="patient">
+        <PaymentHistory />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
+        
 
         <Route
           path="*"

@@ -6,6 +6,7 @@ const { authorize } = require("../middleware/roleMiddleware");
 const {
   upsertProfile,
   getProfile,
+  getUserById,
   deleteProfile
 } = require("../controllers/patientController");
 
@@ -22,6 +23,13 @@ router.get(
   authenticate,
   authorize("patient"),
   getProfile
+);
+
+router.get(
+  "/users/:userId",
+  authenticate,
+  authorize("doctor", "admin"),
+  getUserById
 );
 
 router.delete(

@@ -1,6 +1,6 @@
 import AppointmentCard from "./AppointmentCard";
 
-function AppointmentList({ appointments, doctorNames, onCancel, cancellingId }) {
+function AppointmentList({ appointments, doctorNames, onCancel, cancellingId, onPay, payingId }) {
   if (appointments.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-600">
@@ -18,6 +18,8 @@ function AppointmentList({ appointments, doctorNames, onCancel, cancellingId }) 
           doctorName={doctorNames?.[appointment.doctorId]}
           onCancel={onCancel}
           cancelling={cancellingId === appointment._id}
+          onPay={onPay}       
+          payingId={payingId} 
         />
       ))}
     </div>
