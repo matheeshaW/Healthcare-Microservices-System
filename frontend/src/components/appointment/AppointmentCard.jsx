@@ -17,7 +17,8 @@ const formatDate = (value) => {
 
 function AppointmentCard({ appointment, doctorName, onCancel, cancelling }) {
   const appointmentId = appointment?._id;
-  const isCancelled = appointment?.status === "cancelled";
+  const status = appointment?.status;
+  const canCancel = status === "pending" || status === "confirmed";
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -58,13 +59,15 @@ function AppointmentCard({ appointment, doctorName, onCancel, cancelling }) {
           View Details
         </Link>
 
-        <button
-          onClick={() => onCancel?.(appointmentId)}
-          disabled={!appointmentId || isCancelled || cancelling}
-          className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
-        >
-          {cancelling ? "Cancelling..." : "Cancel"}
-        </button>
+        {canCancel && (
+          <button
+            onClick={() => onCancel?.(appointmentId)}
+            disabled={!appointmentId || cancelling}
+            className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
+          >
+            {cancelling ? "Cancelling..." : "Cancel"}
+          </button>
+        )}
       </div>
     </article>
   );
