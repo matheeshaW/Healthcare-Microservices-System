@@ -31,6 +31,14 @@ export const cancelAppointment = async (appointmentId) => {
   return unwrapData(response);
 };
 
+export const rescheduleAppointment = async (appointmentId, payload) => {
+  const response = await API.put(
+    `/appointments/${appointmentId}/reschedule`,
+    payload,
+  );
+  return unwrapData(response);
+};
+
 export const deleteAppointment = async (appointmentId) => {
   const response = await API.delete(`/appointments/${appointmentId}/delete`);
   return unwrapData(response);
@@ -66,4 +74,45 @@ export const getDoctorAvailabilities = async (doctorId, date) => {
   });
 
   return unwrapData(response) || [];
+};
+
+export const subscribeMyAppointmentUpdates = ({
+  onSnapshot,
+  onUpdated,
+  onError,
+} = {}) => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return () => {};
+  }
+
+  const url = `http://localhost:5000/api/appointments/stream/my?token=${encodeURIComponent(token)}`;
+  const eventSource = new EventSource(url);
+
+  eventSource.addEventListener("snapshot", (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      onSnapshot?.(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      onError?.(error);
+    }
+  });
+
+  eventSource.addEventListener("appointment-updated", (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      onUpdated?.(payload?.appointment || null);
+    } catch (error) {
+      onError?.(error);
+    }
+  });
+
+  eventSource.addEventListener("error", (event) => {
+    onError?.(event);
+  });
+
+  return () => {
+    eventSource.close();
+  };
 };

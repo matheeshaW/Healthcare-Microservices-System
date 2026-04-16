@@ -32,10 +32,19 @@ if (missingVars.length > 0) {
 /* ================= AUTH MIDDLEWARE ================= */
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const queryToken = typeof req.query?.token === "string" ? req.query.token : "";
 
-  if (!authHeader) return res.status(401).json({ message: "No token" });
+  if (!authHeader && !queryToken) {
+    return res.status(401).json({ message: "No token" });
+  }
 
-  const token = authHeader.split(" ")[1];
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.split(" ")[1]
+    : queryToken;
+
+  if (!token) {
+    return res.status(401).json({ message: "No token" });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

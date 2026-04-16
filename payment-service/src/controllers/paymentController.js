@@ -67,7 +67,8 @@ const processPayment = async (req, res) => {
         // --- NEW: SERVER-TO-SERVER COMMUNICATION ---
         // Tell your teammate's Appointment Service (Port 5000) that the payment is done!
         try {
-            const appointmentResponse = await fetch(`http://localhost:5000/api/appointments/${appointmentId}/pay`, {
+            const appointmentServiceBaseUrl = process.env.APPOINTMENT_SERVICE_UPDATE_URL || 'http://localhost:5000';
+            const appointmentResponse = await fetch(`${appointmentServiceBaseUrl}/api/appointments/${appointmentId}/pay`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

@@ -33,3 +33,24 @@ exports.validateStatusUpdate = (req, res, next) => {
 
     next();
 };
+
+exports.validateRescheduleAppointment = (req, res, next) => {
+    const { date, time } = req.body;
+
+    if (!date || !time) {
+        return res.status(400).json({
+            success: false,
+            message: "date and time are required",
+        });
+    }
+
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid date format",
+        });
+    }
+
+    next();
+};
