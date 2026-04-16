@@ -2,15 +2,25 @@ const jwt = require("jsonwebtoken");
 
 exports.authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const tokenFromQuery = typeof req.query?.token === "string" ? req.query.token : "";
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader && !tokenFromQuery) {
     return res.status(401).json({
       success: false,
       message: "Authorization token missing",
     });
   }
 
-  const token = authHeader.split(" ")[1];
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.split(" ")[1]
+    : tokenFromQuery;
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Authorization token missing",
+    });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
