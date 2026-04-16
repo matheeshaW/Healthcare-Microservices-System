@@ -28,18 +28,23 @@ export const AdminDashboard = () => {
       setLoading(true);
       const usersRes = await API.get("/admin/users");
       const doctorsRes = await API.get("/doctors/all?verified=all");
+      const appointmentsRes = await API.get("/appointments/admin/all");
 
       const totalUsers = usersRes.data.data.length;
       const totalDoctors = doctorsRes.data.data.length;
       const pendingDoctors = doctorsRes.data.data.filter(
         (d) => !d.verified,
       ).length;
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const activeAppointments = appointmentsRes.data.data.filter(
+        (appointment) => new Date(appointment.date).toISOString().slice(0, 10) === todayKey,
+      ).length;
 
       setStats({
         totalUsers,
         totalDoctors,
         pendingDoctors,
-        activeAppointments: 0, // Placeholder
+        activeAppointments,
       });
     } catch (err) {
       console.error("Failed to fetch stats:", err);
@@ -164,6 +169,13 @@ export const AdminDashboard = () => {
               onClick={() => navigate("/admin/verify-doctors")}
             >
               Verify Doctors
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={() => navigate("/admin/appointments")}
+            >
+              View Appointments
             </Button>
           </div>
         </Card>

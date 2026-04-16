@@ -18,6 +18,7 @@ export const usePatient = () => {
 
   const fetchProfile = async () => {
     try {
+      setError(null);
       setLoading(true);
       const res = await getProfile();
       setProfile(res.data.data);
@@ -30,6 +31,7 @@ export const usePatient = () => {
 
   const saveProfile = async (data) => {
     try {
+      setError(null);
       setLoading(true);
       const res = await updateProfile(data);
       setProfile(res.data.data);
@@ -44,6 +46,7 @@ export const usePatient = () => {
 
   const fetchReports = async () => {
     try {
+      setError(null);
       setLoading(true);
       const res = await getReports();
       setReports(res.data.data);
@@ -56,6 +59,7 @@ export const usePatient = () => {
 
   const addReport = async (file, metadata = {}) => {
     try {
+      setError(null);
       setLoading(true);
 
       const formData = new FormData();
@@ -76,6 +80,7 @@ export const usePatient = () => {
 
   const deletePatientReport = async (id) => {
     try {
+      setError(null);
       setLoading(true);
       await deleteReport(id);
       setReports(prev => prev.filter(r => r._id !== id));
@@ -88,6 +93,7 @@ export const usePatient = () => {
 
   const deletePatientProfile = async () => {
     try {
+      setError(null);
       setLoading(true);
       await deleteProfile();
       setProfile(null);
