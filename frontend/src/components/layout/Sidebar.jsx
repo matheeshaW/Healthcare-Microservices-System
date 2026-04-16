@@ -46,12 +46,6 @@ export function Sidebar({
         path: "/doctor/availability",
         badge: null,
       },
-      {
-        label: "My Prescriptions",
-        icon: "document",
-        path: "/doctor/prescriptions",
-        badge: null,
-      },
     ];
 
     const patientMenu = [

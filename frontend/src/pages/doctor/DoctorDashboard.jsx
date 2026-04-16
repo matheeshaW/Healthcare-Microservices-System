@@ -89,7 +89,10 @@ export const DoctorDashboard = () => {
     setAppointmentsError("");
 
     try {
-      const response = await updateDoctorAppointmentStatus(appointmentId, status);
+      const response = await updateDoctorAppointmentStatus(
+        appointmentId,
+        status,
+      );
       const updatedAppointment = response?.data;
 
       setAppointments((current) =>
@@ -100,7 +103,9 @@ export const DoctorDashboard = () => {
         ),
       );
     } catch (error) {
-      setAppointmentsError(error.message || "Failed to update appointment status");
+      setAppointmentsError(
+        error.message || "Failed to update appointment status",
+      );
     } finally {
       setUpdatingAppointmentId("");
     }
@@ -181,29 +186,13 @@ export const DoctorDashboard = () => {
                 {myProfile.specialization}
               </p>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-slate-600 uppercase tracking-wide">
                     Experience
                   </p>
                   <p className="text-2xl font-bold text-cyan-600">
                     {myProfile.experience} years
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase tracking-wide">
-                    Rating
-                  </p>
-                  <p className="text-2xl font-bold text-amber-600">
-                    {myProfile.rating.toFixed(1)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600 uppercase tracking-wide">
-                    Reviews
-                  </p>
-                  <p className="text-2xl font-bold text-slate-600">
-                    {myProfile.totalReviews}
                   </p>
                 </div>
                 <div>
@@ -271,7 +260,11 @@ export const DoctorDashboard = () => {
     if (appointmentsLoading) {
       return (
         <Card padding="md" className="text-center">
-          <Spinner size="lg" variant="primary" label="Loading appointments..." />
+          <Spinner
+            size="lg"
+            variant="primary"
+            label="Loading appointments..."
+          />
         </Card>
       );
     }
@@ -284,7 +277,9 @@ export const DoctorDashboard = () => {
             <Button
               variant="danger"
               size="sm"
-              onClick={() => setAppointmentsRefreshKey((current) => current + 1)}
+              onClick={() =>
+                setAppointmentsRefreshKey((current) => current + 1)
+              }
             >
               Retry
             </Button>
@@ -304,70 +299,72 @@ export const DoctorDashboard = () => {
             No patient bookings yet for this doctor.
           </div>
         ) : (
-        <div className="space-y-3">
-          {appointments.map((appt) => (
-            <div
-              key={appt._id}
-              className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
-            >
-              <div className="flex-1">
-                <p className="font-semibold text-slate-900">
-                  {formatPatientLabel(appt.patientId)}
-                </p>
-                <p className="text-sm text-slate-600">
-                  {formatDate(appt.date)} at {appt.time}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Appointment ID: {appt._id}
-                </p>
-              </div>
+          <div className="space-y-3">
+            {appointments.map((appt) => (
+              <div
+                key={appt._id}
+                className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+              >
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-900">
+                    {formatPatientLabel(appt.patientId)}
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    {formatDate(appt.date)} at {appt.time}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Appointment ID: {appt._id}
+                  </p>
+                </div>
 
-              <div className="flex items-center gap-3">
-                <StatusChip status={appt.status} size="sm" />
-                <div className="flex flex-wrap gap-2">
-                  {appt.status === "pending" && (
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      loading={updatingAppointmentId === appt._id}
-                      onClick={() =>
-                        handleAppointmentStatusUpdate(appt._id, "confirmed")
-                      }
-                    >
-                      Confirm
-                    </Button>
-                  )}
+                <div className="flex items-center gap-3">
+                  <StatusChip status={appt.status} size="sm" />
+                  <div className="flex flex-wrap gap-2">
+                    {appt.status === "pending" && (
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        loading={updatingAppointmentId === appt._id}
+                        onClick={() =>
+                          handleAppointmentStatusUpdate(appt._id, "confirmed")
+                        }
+                      >
+                        Confirm
+                      </Button>
+                    )}
 
-                  {(appt.status === "pending" || appt.status === "confirmed") && (
-                    <Button
-                      size="sm"
-                      variant="success"
-                      loading={updatingAppointmentId === appt._id}
-                      onClick={() =>
-                        handleAppointmentStatusUpdate(appt._id, "completed")
-                      }
-                    >
-                      Complete
-                    </Button>
-                  )}
+                    {(appt.status === "pending" ||
+                      appt.status === "confirmed") && (
+                      <Button
+                        size="sm"
+                        variant="success"
+                        loading={updatingAppointmentId === appt._id}
+                        onClick={() =>
+                          handleAppointmentStatusUpdate(appt._id, "completed")
+                        }
+                      >
+                        Complete
+                      </Button>
+                    )}
 
-                  {(appt.status === "pending" || appt.status === "confirmed") && (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      loading={updatingAppointmentId === appt._id}
-                      onClick={() =>
-                        handleAppointmentStatusUpdate(appt._id, "cancelled")
-                      }
-                    >
-                      Cancel
-                    </Button>
-                  )}
+                    {(appt.status === "pending" ||
+                      appt.status === "confirmed") && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        loading={updatingAppointmentId === appt._id}
+                        onClick={() =>
+                          handleAppointmentStatusUpdate(appt._id, "cancelled")
+                        }
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
 
         <Button
@@ -390,7 +387,7 @@ export const DoctorDashboard = () => {
           Doctor Dashboard
         </h1>
         <p className="text-slate-600">
-          Welcome! Manage your profile, appointments, and prescriptions
+          Welcome! Manage your profile and appointments
         </p>
       </div>
 
