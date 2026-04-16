@@ -232,6 +232,27 @@ app.use(
   }),
 );
 
+// Prescription Routes
+app.use(
+  "/api/prescriptions",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.DOCTOR_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/prescriptions${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Doctor Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Doctor Service is currently offline.",
+      });
+    },
+  }),
+);
+
 // Notification Routes
 app.use(
   "/api/notifications",

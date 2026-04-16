@@ -42,11 +42,15 @@ function AppointmentCard({ appointment, doctorName, onCancel, cancelling }) {
         </div>
         <div>
           <dt className="font-medium text-slate-900">Doctor</dt>
-          <dd className="break-all">{doctorName || appointment?.doctorId || "N/A"}</dd>
+          <dd className="break-all">
+            {doctorName || appointment?.doctorId || "N/A"}
+          </dd>
         </div>
         <div>
           <dt className="font-medium text-slate-900">Payment</dt>
-          <dd className="capitalize">{appointment?.paymentStatus || "pending"}</dd>
+          <dd className="capitalize">
+            {appointment?.paymentStatus || "pending"}
+          </dd>
         </div>
       </dl>
 
@@ -57,6 +61,15 @@ function AppointmentCard({ appointment, doctorName, onCancel, cancelling }) {
         >
           View Details
         </Link>
+
+        {appointment?.status === "completed" && (
+          <Link
+            to={`/prescription/${appointmentId}`}
+            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700"
+          >
+            View Prescription
+          </Link>
+        )}
 
         <button
           onClick={() => onCancel?.(appointmentId)}
