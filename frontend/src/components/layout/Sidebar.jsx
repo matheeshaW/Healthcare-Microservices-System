@@ -81,7 +81,12 @@ export function Sidebar({
         path: "/patient/reports",
         badge: null,
       },
-      { label: "Payment History", icon: "chart", path: "/patient/payments", badge: null },
+      {
+        label: "Payment History",
+        icon: "chart",
+        path: "/patient/payments",
+        badge: null,
+      },
     ];
 
     const adminMenu = [
@@ -97,13 +102,13 @@ export function Sidebar({
         path: "/admin/dashboard",
         badge: null,
       },
-      { label: "Users", icon: "users", path: "/admin/users", badge: "3" },
-      { label: "Doctors", icon: "user", path: "/admin/doctors", badge: null },
+      { label: "Users", icon: "users", path: "/admin/users", badge: null },
+
       {
         label: "Verify Doctors",
         icon: "check",
         path: "/admin/verify-doctors",
-        badge: "7",
+        badge: null,
       },
       {
         label: "Appointments",
@@ -111,7 +116,6 @@ export function Sidebar({
         path: "/admin/appointments",
         badge: null,
       },
-      { label: "Reports", icon: "chart", path: "/admin/reports", badge: null },
     ];
 
     if (user?.role === "doctor") return doctorMenu;
