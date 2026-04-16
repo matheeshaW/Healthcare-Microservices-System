@@ -3,6 +3,9 @@ import API from "./axios";
 // Profile
 export const getProfile = () => API.get("/patient/profile");
 export const updateProfile = (data) => API.post("/patient/profile", data);
+export const deleteProfile = () => API.delete("/patient/profile");
+
+export const getPatientById = (userId) => API.get(`/patient/users/${userId}`);
 
 // Reports
 export const uploadReport = (formData) =>

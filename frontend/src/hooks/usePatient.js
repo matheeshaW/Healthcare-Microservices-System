@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   getProfile,
   updateProfile,
+  deleteProfile,
   getReports,
   uploadReport,
   deleteReport
@@ -17,6 +18,7 @@ export const usePatient = () => {
 
   const fetchProfile = async () => {
     try {
+      setError(null);
       setLoading(true);
       const res = await getProfile();
       setProfile(res.data.data);
@@ -29,6 +31,7 @@ export const usePatient = () => {
 
   const saveProfile = async (data) => {
     try {
+      setError(null);
       setLoading(true);
       const res = await updateProfile(data);
       setProfile(res.data.data);
@@ -43,6 +46,7 @@ export const usePatient = () => {
 
   const fetchReports = async () => {
     try {
+      setError(null);
       setLoading(true);
       const res = await getReports();
       setReports(res.data.data);
@@ -53,12 +57,16 @@ export const usePatient = () => {
     }
   };
 
-  const addReport = async (file) => {
+  const addReport = async (file, metadata = {}) => {
     try {
+      setError(null);
       setLoading(true);
 
       const formData = new FormData();
       formData.append("file", file);
+      if (metadata.name) formData.append("name", metadata.name);
+      if (metadata.category) formData.append("category", metadata.category);
+      if (metadata.notes) formData.append("notes", metadata.notes);
 
       await uploadReport(formData);
 
@@ -72,11 +80,26 @@ export const usePatient = () => {
 
   const deletePatientReport = async (id) => {
     try {
+      setError(null);
       setLoading(true);
       await deleteReport(id);
       setReports(prev => prev.filter(r => r._id !== id));
     } catch (err) {
       setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deletePatientProfile = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      await deleteProfile();
+      setProfile(null);
+    } catch (err) {
+      setError(err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -91,6 +114,7 @@ export const usePatient = () => {
     saveProfile,
     fetchReports,
     addReport,
-    deletePatientReport
+    deletePatientReport,
+    deletePatientProfile
   };
 };

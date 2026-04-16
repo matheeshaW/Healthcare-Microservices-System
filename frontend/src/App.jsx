@@ -6,7 +6,6 @@ import MyAppointments from "./pages/appointment/myAppointments";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import DoctorProfile from "./pages/doctor/DoctorProfile";
 import ManageAvailability from "./pages/doctor/ManageAvailability";
-import MyPrescriptions from "./pages/doctor/MyPrescriptions";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -18,6 +17,7 @@ import PaymentHistory from "./pages/patient/PaymentHistory";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAppointments from "./pages/admin/AdminAppointments";
 import UserList from "./pages/admin/UserList";
 import DoctorVerification from "./pages/admin/DoctorVerification";
 
@@ -158,17 +158,6 @@ function App() {
         />
 
         <Route
-          path="/doctor/prescriptions"
-          element={
-            <ProtectedRoute roles={["doctor"]}>
-              <DashboardLayout userRole="doctor">
-                <MyPrescriptions />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/admin/dashboard"
           element={
             <ProtectedRoute roles={["admin"]}>
@@ -196,6 +185,17 @@ function App() {
             <ProtectedRoute roles={["admin"]}>
               <DashboardLayout userRole="admin">
                 <DoctorVerification />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/appointments"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <AdminAppointments />
               </DashboardLayout>
             </ProtectedRoute>
           }

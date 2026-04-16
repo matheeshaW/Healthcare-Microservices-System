@@ -21,6 +21,11 @@ const AvailabilitySchema = new mongoose.Schema(
           required: true,
         },
 
+        available: {
+          type: Boolean,
+          default: true,
+        },
+
         isBooked: {
           type: Boolean,
           default: false,

@@ -1,11 +1,19 @@
 import { useEffect } from "react";
 import { usePatient } from "../../hooks/usePatient";
 import PatientProfileCard from "../../components/patient/PatientProfileCard";
-import { Card, Spinner, Button } from "../../components/ui";
+import ReportList from "../../components/patient/ReportList";
+import { Card, Spinner, Button, StatusChip } from "../../components/ui";
 import { useNavigate } from "react-router-dom";
 
 function PatientDashboard() {
-  const { profile, reports, fetchProfile, fetchReports, loading } = usePatient();
+  const {
+    profile,
+    reports,
+    fetchProfile,
+    fetchReports,
+    deletePatientReport,
+    loading,
+  } = usePatient();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,8 +28,29 @@ function PatientDashboard() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Patient Dashboard</h1>
-        <p className="text-slate-600">Overview of your health data</p>
+        <h1 className="text-2xl font-bold text-slate-900">Patient Dashboard</h1>
+        <p className="text-slate-600">Overview of your profile and latest medical reports</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card border shadow="sm">
+          <p className="text-sm text-slate-500">Profile Status</p>
+          <div className="mt-2">
+            <StatusChip status={profile ? "active" : "pending"} />
+          </div>
+        </Card>
+
+        <Card border shadow="sm">
+          <p className="text-sm text-slate-500">Reports Uploaded</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{reports.length}</p>
+        </Card>
+
+        <Card border shadow="sm">
+          <p className="text-sm text-slate-500">Last Updated</p>
+          <p className="mt-2 text-sm font-semibold text-slate-900">
+            {profile?.updatedAt ? new Date(profile.updatedAt).toLocaleString() : "No profile yet"}
+          </p>
+        </Card>
       </div>
 
       {/* Profile Card */}
@@ -44,20 +73,20 @@ function PatientDashboard() {
 
       {/* Recent Reports */}
       <Card>
-        <h3 className="text-lg font-bold mb-3">Recent Reports</h3>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Recent Reports</h3>
+            <p className="text-sm text-slate-600">
+              Your latest uploaded reports at a glance.
+            </p>
+          </div>
 
-        {reports.length === 0 ? (
-          <p className="text-slate-500">No reports uploaded yet</p>
-        ) : (
-          reports.slice(0, 3).map((r) => (
-            <div key={r._id} className="flex justify-between border-b py-2">
-              <span>{r.originalName}</span>
-              <a href={r.fileUrl} target="_blank" className="text-blue-500">
-                View
-              </a>
-            </div>
-          ))
-        )}
+          <Button variant="secondary" onClick={() => navigate("/patient/reports")}>
+            View All
+          </Button>
+        </div>
+
+        <ReportList reports={reports.slice(0, 3)} onDelete={deletePatientReport} />
       </Card>
 
     </div>
