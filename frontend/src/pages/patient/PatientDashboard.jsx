@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { usePatient } from "../../hooks/usePatient";
 import PatientProfileCard from "../../components/patient/PatientProfileCard";
-import { Card, Spinner, Button } from "../../components/ui";
+import { Card, Spinner, Button, StatusChip, Badge } from "../../components/ui";
 import { useNavigate } from "react-router-dom";
 
 function PatientDashboard() {
@@ -20,8 +20,29 @@ function PatientDashboard() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Patient Dashboard</h1>
-        <p className="text-slate-600">Overview of your health data</p>
+        <h1 className="text-2xl font-bold text-slate-900">Patient Dashboard</h1>
+        <p className="text-slate-600">Overview of your profile and latest medical reports</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card border shadow="sm">
+          <p className="text-sm text-slate-500">Profile Status</p>
+          <div className="mt-2">
+            <StatusChip status={profile ? "active" : "pending"} />
+          </div>
+        </Card>
+
+        <Card border shadow="sm">
+          <p className="text-sm text-slate-500">Reports Uploaded</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{reports.length}</p>
+        </Card>
+
+        <Card border shadow="sm">
+          <p className="text-sm text-slate-500">Last Updated</p>
+          <p className="mt-2 text-sm font-semibold text-slate-900">
+            {profile?.updatedAt ? new Date(profile.updatedAt).toLocaleString() : "No profile yet"}
+          </p>
+        </Card>
       </div>
 
       {/* Profile Card */}
@@ -50,9 +71,15 @@ function PatientDashboard() {
           <p className="text-slate-500">No reports uploaded yet</p>
         ) : (
           reports.slice(0, 3).map((r) => (
-            <div key={r._id} className="flex justify-between border-b py-2">
-              <span>{r.originalName}</span>
-              <a href={r.fileUrl} target="_blank" className="text-blue-500">
+            <div key={r._id} className="flex flex-col gap-2 border-b py-3 last:border-b-0 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-semibold text-slate-900">{r.originalName}</p>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  <Badge variant="default">{new Date(r.createdAt).toLocaleDateString()}</Badge>
+                  {r.category && <Badge variant="primary">{r.category}</Badge>}
+                </div>
+              </div>
+              <a href={r.fileUrl} target="_blank" rel="noreferrer" className="text-cyan-600 hover:text-cyan-700">
                 View
               </a>
             </div>
