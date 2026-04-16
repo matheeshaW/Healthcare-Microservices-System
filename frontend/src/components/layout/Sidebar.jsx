@@ -393,21 +393,6 @@ export function Sidebar({
             </Link>
           ))}
         </div>
-
-        {/* Sidebar Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-slate-200 bg-slate-50">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-              Help & Support
-            </p>
-            <button className="w-full px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 rounded-lg transition">
-              View Docs
-            </button>
-            <button className="w-full px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200 rounded-lg transition">
-              Contact Support
-            </button>
-          </div>
-        </div>
       </aside>
     </>
   );

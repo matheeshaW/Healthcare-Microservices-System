@@ -15,8 +15,13 @@ import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientProfile from "./pages/patient/PatientProfile";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
+// Merged Imports: Both Telemedicine and Admin Pages
 import VideoSession from './pages/telemedicine/VideoSession';
 import TelemedicineDashboard from './pages/telemedicine/TelemedicineDashboard';
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserList from "./pages/admin/UserList";
+import DoctorVerification from "./pages/admin/DoctorVerification";
+import PaymentHistory from "./pages/patient/PaymentHistory"; // Re-added this based on previous steps
 
 function App() {
   return (
@@ -26,6 +31,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* Redirects */}
         <Route path="/profile" element={<Navigate to="/patient/profile" replace />} />
         <Route path="/reports" element={<Navigate to="/patient/reports" replace />} />
         <Route path="/appointments" element={<Navigate to="/appointment/my" replace />} />
@@ -43,6 +49,7 @@ function App() {
           }
         />
 
+        {/* Patient Routes */}
         <Route
           path="/patient/dashboard"
           element={
@@ -77,6 +84,18 @@ function App() {
         />
 
         <Route
+          path="/patient/payments"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <PaymentHistory />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Appointment Routes */}
+        <Route
           path="/appointment/book"
           element={
             <ProtectedRoute roles={["patient"]}>
@@ -109,6 +128,7 @@ function App() {
           }
         />
 
+        {/* Doctor Routes */}
         <Route
           path="/doctor/dashboard"
           element={
@@ -153,29 +173,63 @@ function App() {
           }
         />
 
+        {/* Telemedicine Routes */}
+        <Route 
+          path="/telemedicine" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <TelemedicineDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route path="/telemedicine/session/:id?" element={<ProtectedRoute><VideoSession /></ProtectedRoute>} />
+
+        {/* Admin Routes */}
         <Route
-          path="/admin"
+          path="/admin/dashboard"
           element={
             <ProtectedRoute roles={["admin"]}>
               <DashboardLayout userRole="admin">
-                <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+                <AdminDashboard />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* Telemedicine Routes */}
-        <Route 
-          path="/telemedicine" 
+        <Route
+          path="/admin/users"
           element={
-            <DashboardLayout>
-              <TelemedicineDashboard />
-            </DashboardLayout>
-          } 
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <UserList />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
         />
-        <Route path="/telemedicine/session/:id?" element={<VideoSession />} />
 
-        {/* 404 Not Found Catch-All */}
+        <Route
+          path="/admin/verify-doctors"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <DoctorVerification />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <Navigate to="/admin/dashboard" replace />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 404 Catch-All */}
         <Route
           path="*"
           element={

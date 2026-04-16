@@ -176,7 +176,27 @@ app.use(
   }),
 );
 
-// Doctor Service Routes
+// Doctor Service - Public Route (no auth required)
+app.use(
+  "/api/doctors/register",
+  createProxyMiddleware({
+    target: process.env.DOCTOR_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/doctors/register${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Doctor Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Doctor Service is currently offline.",
+      });
+    },
+  }),
+);
+
+// Doctor Service Routes (protected)
 app.use(
   "/api/doctors",
   authenticate,

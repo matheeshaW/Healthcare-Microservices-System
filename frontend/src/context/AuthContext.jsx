@@ -22,7 +22,37 @@ export const AuthProvider = ({ children }) => {
   const login = async ({ email, password }) => {
     const res = await API.post("/auth/login", { email, password });
 
-    console.log("[AuthContext] Login response user:", res.data.user);
+    // Check if user is a doctor and verify their profile is approved
+    if (res.data.user.role === "doctor") {
+      try {
+        // Fetch doctor profile to check verification status using a per-request header
+        const doctorRes = await API.get("/doctors/me", {
+          headers: {
+            Authorization: `Bearer ${res.data.token}`,
+          },
+        });
+
+        // If doctor profile is not verified, reject login
+        if (!doctorRes.data.data.verified) {
+          const error = new Error(
+            "Your doctor profile is pending admin verification. Please wait until an admin verifies your credentials.",
+          );
+          error.response = {
+            data: {
+              message:
+                "Login failed: Your doctor profile is pending admin verification. Please wait for approval.",
+            },
+          };
+          throw error;
+        }
+      } catch (err) {
+        // Clear any stored data
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        throw err;
+      }
+    }
 
     localStorage.setItem("token", res.data.token);
     localStorage.setItem("user", JSON.stringify(res.data.user));
@@ -38,6 +68,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    delete API.defaults.headers.common["Authorization"];
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
