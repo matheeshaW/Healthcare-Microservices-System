@@ -3,6 +3,7 @@ import { Card, Button, Badge, Modal } from "../ui";
 
 function ReportList({ reports, onDelete }) {
   const [previewReport, setPreviewReport] = useState(null);
+  const [reportToDelete, setReportToDelete] = useState(null);
 
   const previewType = useMemo(() => {
     if (!previewReport) return null;
@@ -64,7 +65,7 @@ function ReportList({ reports, onDelete }) {
             <Button
               size="sm"
               variant="danger"
-              onClick={() => onDelete(r._id)}
+              onClick={() => setReportToDelete(r)}
             >
               Delete
             </Button>
@@ -73,6 +74,38 @@ function ReportList({ reports, onDelete }) {
           </Card>
         ))}
       </div>
+
+      <Modal
+        isOpen={Boolean(reportToDelete)}
+        onClose={() => setReportToDelete(null)}
+        title="Delete Report"
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setReportToDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={async () => {
+                if (!reportToDelete?._id) return;
+                await onDelete(reportToDelete._id);
+                setReportToDelete(null);
+              }}
+            >
+              Confirm Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          Are you sure you want to delete this report?
+          <span className="font-semibold text-slate-800">
+            {" "}
+            {reportToDelete?.name || reportToDelete?.originalName || "Selected report"}
+          </span>
+          . This action cannot be undone.
+        </p>
+      </Modal>
 
       <Modal
         isOpen={Boolean(previewReport)}
