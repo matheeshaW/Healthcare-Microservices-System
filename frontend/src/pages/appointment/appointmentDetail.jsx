@@ -201,9 +201,11 @@ function AppointmentDetail() {
         </div>
       )}
 
-      <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-sm text-cyan-700">
-        Real-time updates: {realtimeConnected ? "Connected" : "Reconnecting..."}
-      </div>
+      {!realtimeConnected && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          Real-time updates are reconnecting...
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-[1.7fr_1fr]">
         <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
