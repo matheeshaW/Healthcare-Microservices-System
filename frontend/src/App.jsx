@@ -1,26 +1,19 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
-
-// Auth pages
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-
-// Protected route component
-import ProtectedRoute from "./routes/ProtectedRoute";
-
-// Layout
+import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router-dom";
 import DashboardLayout from "./components/layout/DashboardLayout";
-import Home from "./pages/Home";
-
-// Patient Pages
-import PatientProfile from "./pages/patient/PatientProfile";
-import MyReports from "./pages/patient/MyReports";
-import PatientDashboard from "./pages/patient/PatientDashboard";
-
-// Doctor Pages
+import AppointmentDetail from "./pages/appointment/appointmentDetail";
+import BookAppointment from "./pages/appointment/bookAppointment";
+import MyAppointments from "./pages/appointment/myAppointments";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import DoctorProfile from "./pages/doctor/DoctorProfile";
 import ManageAvailability from "./pages/doctor/ManageAvailability";
 import MyPrescriptions from "./pages/doctor/MyPrescriptions";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import MyReports from "./pages/patient/MyReports";
+import PatientDashboard from "./pages/patient/PatientDashboard";
+import PatientProfile from "./pages/patient/PatientProfile";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -31,13 +24,104 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* PUBLIC ROUTES (No Authentication Required)*/}
-
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* DOCTOR ROUTES (doctor role required) */}
+        <Route
+          path="/profile"
+          element={<Navigate to="/patient/profile" replace />}
+        />
+        <Route
+          path="/reports"
+          element={<Navigate to="/patient/reports" replace />}
+        />
+        <Route
+          path="/appointments"
+          element={<Navigate to="/appointment/my" replace />}
+        />
+        <Route
+          path="/patient/appointments"
+          element={<Navigate to="/appointment/my" replace />}
+        />
+        <Route path="/dashboard" element={<Navigate to="/home" replace />} />
+
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Home />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patient/dashboard"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <PatientDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patient/profile"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <PatientProfile />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patient/reports"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <MyReports />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/appointment/book"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <BookAppointment />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/appointment/my"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <MyAppointments />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/appointment/:id"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <AppointmentDetail />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/doctor/dashboard"
@@ -62,17 +146,6 @@ function App() {
         />
 
         <Route
-          path="/patient/profile"
-          element={
-            <ProtectedRoute roles={["patient"]}>
-              <DashboardLayout>
-                <PatientProfile />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/doctor/availability"
           element={
             <ProtectedRoute roles={["doctor"]}>
@@ -84,33 +157,44 @@ function App() {
         />
 
         <Route
-          path="/patient/dashboard"
-          element={
-            <ProtectedRoute roles={["patient"]}>
-              <DashboardLayout>
-                <PatientDashboard />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/patient/reports"
-          element={
-            <ProtectedRoute roles={["patient"]}>
-              <DashboardLayout>
-                <MyReports />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/doctor/prescriptions"
           element={
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <MyPrescriptions />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <AdminDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <UserList />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/verify-doctors"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <DoctorVerification />
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -169,9 +253,6 @@ function App() {
           }
         />
 
-        <Route path="/dashboard" element={<Navigate to="/home" replace />} />
-
-        {/* 404 Not Found */}
         <Route
           path="*"
           element={
@@ -181,7 +262,7 @@ function App() {
                 <p className="text-xl text-slate-600">Page not found</p>
                 <Link
                   to="/login"
-                  className="inline-block px-6 py-3 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition"
+                  className="inline-block rounded-lg bg-cyan-600 px-6 py-3 font-semibold text-white transition hover:bg-cyan-700"
                 >
                   Back to Login
                 </Link>

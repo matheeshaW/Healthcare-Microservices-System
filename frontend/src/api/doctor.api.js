@@ -60,6 +60,34 @@ export const getMyProfile = async () => {
 };
 
 /**
+ * Get appointments for the logged-in doctor
+ * @returns {Promise<Object>}
+ */
+export const getDoctorAppointments = async () => {
+  try {
+    const response = await API.get("/appointments/doctor");
+    return response.data;
+  } catch (error) {
+    throw createApiError(error, "Failed to fetch doctor appointments");
+  }
+};
+
+/**
+ * Update doctor appointment status
+ * @param {string} appointmentId
+ * @param {"confirmed"|"completed"|"cancelled"} status
+ * @returns {Promise<Object>}
+ */
+export const updateDoctorAppointmentStatus = async (appointmentId, status) => {
+  try {
+    const response = await API.put(`/appointments/${appointmentId}/status`, { status });
+    return response.data;
+  } catch (error) {
+    throw createApiError(error, "Failed to update appointment status");
+  }
+};
+
+/**
  * Get doctor profile by ID
  * @param {string} doctorId
  * @returns {Promise<Object>}
@@ -206,6 +234,8 @@ export default {
   getAllDoctors,
   searchDoctors,
   getMyProfile,
+  getDoctorAppointments,
+  updateDoctorAppointmentStatus,
   getDoctorById,
   createDoctorProfile,
   updateDoctorProfile,
