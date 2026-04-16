@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { getProfile, updateProfile } from "../../api/patient.api";
+import { usePatient } from "../../hooks/usePatient";
+import { Button, Card, Spinner } from "../../components/ui";
 
 function PatientProfile() {
+  const { profile, fetchProfile, saveProfile, loading } = usePatient();
+
   const [form, setForm] = useState({
     age: "",
     gender: "",
@@ -14,30 +17,20 @@ function PatientProfile() {
     fetchProfile();
   }, []);
 
-  const fetchProfile = async () => {
-    try {
-      const res = await getProfile();
-
-      const data = res.data.data;
-
+  useEffect(() => {
+    if (profile) {
       setForm({
-        age: data.age || "",
-        gender: data.gender || "",
-        address: data.address || "",
-        medicalHistory: data.medicalHistory?.join(", ") || "",
-        allergies: data.allergies?.join(", ") || ""
+        age: profile.age || "",
+        gender: profile.gender || "",
+        address: profile.address || "",
+        medicalHistory: profile.medicalHistory?.join(", ") || "",
+        allergies: profile.allergies?.join(", ") || ""
       });
-    } catch {
-      console.log("No profile yet");
     }
-  };
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  }, [profile]);
 
   const handleSubmit = async () => {
-    await updateProfile({
+    await saveProfile({
       ...form,
       medicalHistory: form.medicalHistory.split(",").map(s => s.trim()),
       allergies: form.allergies.split(",").map(s => s.trim())
@@ -46,20 +39,22 @@ function PatientProfile() {
     alert("Profile updated!");
   };
 
+  if (loading) return <Spinner label="Loading profile..." />;
+
   return (
-    <div>
+    <Card>
       <h2 className="text-xl font-bold mb-4">Patient Profile</h2>
 
-      <input name="age" placeholder="Age" value={form.age} onChange={handleChange} className="border p-2" />
-      <input name="gender" placeholder="Gender" value={form.gender} onChange={handleChange} className="border p-2" />
-      <input name="address" placeholder="Address" value={form.address} onChange={handleChange} className="border p-2" />
-      <input name="medicalHistory" placeholder="Medical History (comma separated)" value={form.medicalHistory} onChange={handleChange} className="border p-2" />
-      <input name="allergies" placeholder="Allergies (comma separated)" value={form.allergies} onChange={handleChange} className="border p-2" />
+      <input name="age" value={form.age} onChange={(e)=>setForm({...form, age:e.target.value})} className="input" />
+      <input name="gender" value={form.gender} onChange={(e)=>setForm({...form, gender:e.target.value})} className="input" />
+      <input name="address" value={form.address} onChange={(e)=>setForm({...form, address:e.target.value})} className="input" />
+      <input name="medicalHistory" value={form.medicalHistory} onChange={(e)=>setForm({...form, medicalHistory:e.target.value})} className="input" placeholder="Comma separated" />
+      <input name="allergies" value={form.allergies} onChange={(e)=>setForm({...form, allergies:e.target.value})} className="input" placeholder="Comma separated" />
 
-      <button onClick={handleSubmit} className="bg-blue-500 px-3 py-1 rounded">
-        Save
-      </button>
-    </div>
+      <Button onClick={handleSubmit} fullWidth>
+        Save Profile
+      </Button>
+    </Card>
   );
 }
 

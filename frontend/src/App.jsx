@@ -14,6 +14,7 @@ import Home from "./pages/Home";
 // Patient Pages
 import PatientProfile from "./pages/patient/PatientProfile";
 import MyReports from "./pages/patient/MyReports";
+import PatientDashboard from "./pages/patient/PatientDashboard";
 
 // Doctor Pages
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -78,6 +79,17 @@ function App() {
         />
 
         <Route
+          path="/patient/dashboard"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout>
+                <PatientDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/patient/reports"
           element={
             <ProtectedRoute roles={["patient"]}>
@@ -110,7 +122,7 @@ function App() {
           }
         />
 
-        
+
         <Route
           path="/home"
           element={
