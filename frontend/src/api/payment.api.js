@@ -18,9 +18,11 @@ export const createCheckoutSession = async (appointmentId) => {
 
   return await res.json();
 };
+
 export const confirmPaymentToDB = async (paymentData) => {
   const token = localStorage.getItem("token");
   
+  // This hits the processPayment controller above
   const res = await fetch("http://localhost:5005/api/payment/pay", {
     method: "POST",
     headers: {
@@ -29,6 +31,11 @@ export const confirmPaymentToDB = async (paymentData) => {
     },
     body: JSON.stringify(paymentData)
   });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Payment confirmation failed");
+  }
 
   return await res.json();
 };

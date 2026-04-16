@@ -179,6 +179,12 @@ app.use(
   }),
 );
 
+// Reports Service Route
+app.use("/api/reports", authenticate, createProxyMiddleware({
+  target: process.env.PATIENT_SERVICE_URL,
+  changeOrigin: true,
+  pathRewrite: (path) => `/api/reports${path}`
+}));
 app.use(
   "/api/reports",
   authenticate,

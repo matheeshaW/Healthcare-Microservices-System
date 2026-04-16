@@ -14,9 +14,11 @@ import MyReports from "./pages/patient/MyReports";
 import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientProfile from "./pages/patient/PatientProfile";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import PaymentHistory from "./pages/patient/PaymentHistory";
+import PaymentHistory from "./pages/patient/PaymentHistory"; // Only declare once
 
-// Admin Pages
+// Merged Imports: Both Telemedicine and Admin Pages
+import VideoSession from './pages/telemedicine/VideoSession';
+import TelemedicineDashboard from './pages/telemedicine/TelemedicineDashboard';
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAppointments from "./pages/admin/AdminAppointments";
 import UserList from "./pages/admin/UserList";
@@ -30,22 +32,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        <Route
-          path="/profile"
-          element={<Navigate to="/patient/profile" replace />}
-        />
-        <Route
-          path="/reports"
-          element={<Navigate to="/patient/reports" replace />}
-        />
-        <Route
-          path="/appointments"
-          element={<Navigate to="/appointment/my" replace />}
-        />
-        <Route
-          path="/patient/appointments"
-          element={<Navigate to="/appointment/my" replace />}
-        />
+        {/* Redirects */}
+        <Route path="/profile" element={<Navigate to="/patient/profile" replace />} />
+        <Route path="/reports" element={<Navigate to="/patient/reports" replace />} />
+        <Route path="/appointments" element={<Navigate to="/appointment/my" replace />} />
+        <Route path="/patient/appointments" element={<Navigate to="/appointment/my" replace />} />
         <Route path="/dashboard" element={<Navigate to="/home" replace />} />
 
         <Route
@@ -59,6 +50,7 @@ function App() {
           }
         />
 
+        {/* Patient Routes */}
         <Route
           path="/patient/dashboard"
           element={
@@ -92,6 +84,19 @@ function App() {
           }
         />
 
+        {/* Payment History Route (Keep this one) */}
+        <Route
+          path="/patient/payments"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <PaymentHistory />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Appointment Routes */}
         <Route
           path="/appointment/book"
           element={
@@ -125,6 +130,7 @@ function App() {
           }
         />
 
+        {/* Doctor Routes */}
         <Route
           path="/prescription/:appointmentId"
           element={
@@ -169,6 +175,31 @@ function App() {
           }
         />
 
+        {/* <Route
+          path="/doctor/prescriptions"
+          element={
+            <ProtectedRoute roles={["doctor"]}>
+              <DashboardLayout userRole="doctor">
+                <MyPrescriptions />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        /> */}
+
+        {/* Telemedicine Routes */}
+        <Route 
+          path="/telemedicine" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <TelemedicineDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route path="/telemedicine/session/:id?" element={<ProtectedRoute><VideoSession /></ProtectedRoute>} />
+
+        {/* Admin Routes */}
         <Route
           path="/admin/dashboard"
           element={
@@ -221,19 +252,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* --- Payment History Route --- */}
-<Route
-  path="/patient/payments"
-  element={
-    <ProtectedRoute roles={["patient"]}>
-      <DashboardLayout userRole="patient">
-        <PaymentHistory />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
-        
 
+        {/* 404 Catch-All */}
         <Route
           path="*"
           element={

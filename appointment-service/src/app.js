@@ -8,7 +8,13 @@ const appointmentRoutes = require("./routes/appointment.routes");
 // Middleware
 app.use(express.json());
 app.use("/api/appointments", appointmentRoutes);
+const cors = require('cors');
 
+// Allow your frontend to talk to this service
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  credentials: true
+}));
 // Test route
 app.get("/", (req, res) => {
   res.send("Appointment Service is Running");

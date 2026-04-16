@@ -11,7 +11,6 @@ app.use(cors());
 
 const PORT = process.env.PORT || 5006;
 
-
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'UP', service: 'telemedicine-service' });
 });
@@ -25,7 +24,7 @@ async function startServer() {
         console.log('MongoDB connected for Telemedicine Service');
 
         app.listen(PORT, () => {
-            console.log(`Telemedicine Service running on port ${PORT}`);
+            console.log(`🚀 Telemedicine Service running on port ${PORT}`);
         });
     } catch (err) {
         console.error('❌ Failed to start Telemedicine Service:', err);
