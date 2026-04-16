@@ -1,11 +1,19 @@
 import { useEffect } from "react";
 import { usePatient } from "../../hooks/usePatient";
 import PatientProfileCard from "../../components/patient/PatientProfileCard";
-import { Card, Spinner, Button, StatusChip, Badge } from "../../components/ui";
+import ReportList from "../../components/patient/ReportList";
+import { Card, Spinner, Button, StatusChip } from "../../components/ui";
 import { useNavigate } from "react-router-dom";
 
 function PatientDashboard() {
-  const { profile, reports, fetchProfile, fetchReports, loading } = usePatient();
+  const {
+    profile,
+    reports,
+    fetchProfile,
+    fetchReports,
+    deletePatientReport,
+    loading,
+  } = usePatient();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,26 +73,20 @@ function PatientDashboard() {
 
       {/* Recent Reports */}
       <Card>
-        <h3 className="text-lg font-bold mb-3">Recent Reports</h3>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Recent Reports</h3>
+            <p className="text-sm text-slate-600">
+              Your latest uploaded reports at a glance.
+            </p>
+          </div>
 
-        {reports.length === 0 ? (
-          <p className="text-slate-500">No reports uploaded yet</p>
-        ) : (
-          reports.slice(0, 3).map((r) => (
-            <div key={r._id} className="flex flex-col gap-2 border-b py-3 last:border-b-0 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="font-semibold text-slate-900">{r.originalName}</p>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  <Badge variant="default">{new Date(r.createdAt).toLocaleDateString()}</Badge>
-                  {r.category && <Badge variant="primary">{r.category}</Badge>}
-                </div>
-              </div>
-              <a href={r.fileUrl} target="_blank" rel="noreferrer" className="text-cyan-600 hover:text-cyan-700">
-                View
-              </a>
-            </div>
-          ))
-        )}
+          <Button variant="secondary" onClick={() => navigate("/patient/reports")}>
+            View All
+          </Button>
+        </div>
+
+        <ReportList reports={reports.slice(0, 3)} onDelete={deletePatientReport} />
       </Card>
 
     </div>
