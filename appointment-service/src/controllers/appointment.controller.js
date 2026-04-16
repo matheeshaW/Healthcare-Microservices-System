@@ -14,7 +14,9 @@ const isUpstreamConnectivityOrTimeoutError = (error) =>
     ].includes(error.code));
 
 const publishRealtimeUpdate = (appointment) => {
-  appointmentEventsService.publishUpdated(appointment.toObject ? appointment.toObject() : appointment);
+  appointmentEventsService.publishUpdated(
+    appointment.toObject ? appointment.toObject() : appointment,
+  );
 };
 
 // Create Appointment (patient only)
@@ -119,7 +121,6 @@ exports.getMyAppointments = async (req, res) => {
       message: "Patient appointments fetched",
     });
   } catch (error) {
-
     res.status(isUpstreamConnectivityOrTimeoutError ? 503 : 500).json({
       success: false,
       message: isUpstreamConnectivityOrTimeoutError
@@ -144,7 +145,6 @@ exports.getDoctorAppointments = async (req, res) => {
       message: "Doctor appointments fetched",
     });
   } catch (error) {
-
     res.status(isUpstreamConnectivityOrTimeoutError ? 503 : 500).json({
       success: false,
       message: isUpstreamConnectivityOrTimeoutError
@@ -227,7 +227,6 @@ exports.updateAppointmentStatus = async (req, res) => {
       message: "Appointment status updated",
     });
   } catch (error) {
-
     res.status(isUpstreamConnectivityOrTimeoutError ? 503 : 500).json({
       success: false,
       message: isUpstreamConnectivityOrTimeoutError
@@ -250,8 +249,44 @@ exports.cancelAppointment = async (req, res) => {
       });
     }
 
-    // ADMIN deletion: Simply delete from database, no slot release needed
+    // ADMIN deletion: Release booked slot (best-effort) before deleting
     if (req.user.role === "admin") {
+      try {
+        const availabilities =
+          await appointmentService.fetchDoctorAvailabilities({
+            doctorId: appointment.doctorId,
+            date: appointment.date,
+            token,
+          });
+
+        const slotRef = appointmentService.findBookedSlotForAppointment(
+          availabilities,
+          appointment.date,
+          appointment.time,
+          appointment._id,
+        );
+
+        if (slotRef) {
+          try {
+            await appointmentService.releaseDoctorSlot({
+              availabilityId: slotRef.availabilityId,
+              slotIndex: slotRef.slotIndex,
+              token,
+            });
+          } catch (releaseError) {
+            console.warn(
+              "Could not release slot during admin deletion:",
+              releaseError.message,
+            );
+          }
+        }
+      } catch (slotCheckError) {
+        console.warn(
+          "Could not check/release slots during admin deletion:",
+          slotCheckError.message,
+        );
+      }
+
       await appointmentService.deleteById(id);
       return res.json({
         success: true,
@@ -268,32 +303,37 @@ exports.cancelAppointment = async (req, res) => {
       });
     }
 
-    // Try to release doctor slot (non-critical)
-    try {
-      const availabilities = await appointmentService.fetchDoctorAvailabilities(
-        {
-          doctorId: appointment.doctorId,
-          date: appointment.date,
-          token,
-        },
-      );
+    // Release doctor slot (critical - must succeed or fail the cancellation)
+    const availabilities = await appointmentService.fetchDoctorAvailabilities({
+      doctorId: appointment.doctorId,
+      date: appointment.date,
+      token,
+    });
 
-      const slotRef = appointmentService.findBookedSlotForAppointment(
-        availabilities,
-        appointment.date,
-        appointment.time,
-        appointment._id,
-      );
+    const slotRef = appointmentService.findBookedSlotForAppointment(
+      availabilities,
+      appointment.date,
+      appointment.time,
+      appointment._id,
+    );
 
-      if (slotRef) {
+    if (slotRef) {
+      try {
         await appointmentService.releaseDoctorSlot({
           availabilityId: slotRef.availabilityId,
           slotIndex: slotRef.slotIndex,
           token,
         });
+      } catch (releaseError) {
+        if (releaseError.response || releaseError.code === "ECONNABORTED") {
+          return res.status(503).json({
+            success: false,
+            message: "Doctor service is unavailable",
+          });
+        }
+
+        throw releaseError;
       }
-    } catch (slotError) {
-      console.warn("Could not release slot:", slotError.message);
     }
 
     appointment.status = "cancelled";
@@ -306,7 +346,6 @@ exports.cancelAppointment = async (req, res) => {
       message: "Appointment cancelled",
     });
   } catch (error) {
-
     res.status(isUpstreamConnectivityOrTimeoutError ? 503 : 500).json({
       success: false,
       message: isUpstreamConnectivityOrTimeoutError
@@ -371,7 +410,8 @@ exports.rescheduleAppointment = async (req, res) => {
 
     const isSameBooking =
       String(doctorId) === oldDoctorId &&
-      new Date(date).toISOString().slice(0, 10) === new Date(oldDate).toISOString().slice(0, 10) &&
+      new Date(date).toISOString().slice(0, 10) ===
+        new Date(oldDate).toISOString().slice(0, 10) &&
       time === oldTime;
 
     if (isSameBooking) {
@@ -381,13 +421,18 @@ exports.rescheduleAppointment = async (req, res) => {
       });
     }
 
-    const nextAvailabilities = await appointmentService.fetchDoctorAvailabilities({
-      doctorId,
-      date,
-      token,
-    });
+    const nextAvailabilities =
+      await appointmentService.fetchDoctorAvailabilities({
+        doctorId,
+        date,
+        token,
+      });
 
-    const nextSlotRef = appointmentService.findMatchingSlot(nextAvailabilities, date, time);
+    const nextSlotRef = appointmentService.findMatchingSlot(
+      nextAvailabilities,
+      date,
+      time,
+    );
 
     if (!nextSlotRef) {
       return res.status(409).json({
@@ -396,11 +441,12 @@ exports.rescheduleAppointment = async (req, res) => {
       });
     }
 
-    const oldAvailabilities = await appointmentService.fetchDoctorAvailabilities({
-      doctorId: oldDoctorId,
-      date: oldDate,
-      token,
-    });
+    const oldAvailabilities =
+      await appointmentService.fetchDoctorAvailabilities({
+        doctorId: oldDoctorId,
+        date: oldDate,
+        token,
+      });
 
     const oldSlotRef = appointmentService.findBookedSlotForAppointment(
       oldAvailabilities,
@@ -437,14 +483,16 @@ exports.rescheduleAppointment = async (req, res) => {
       });
     } catch (bookingError) {
       if (oldSlotRef) {
-        await appointmentService.bookDoctorSlot({
-          availabilityId: oldSlotRef.availabilityId,
-          slotIndex: oldSlotRef.slotIndex,
-          appointmentId: appointment._id,
-          token,
-        }).catch(() => {
-          // Best-effort rollback; a background reconciliation can fix any rare mismatch.
-        });
+        await appointmentService
+          .bookDoctorSlot({
+            availabilityId: oldSlotRef.availabilityId,
+            slotIndex: oldSlotRef.slotIndex,
+            appointmentId: appointment._id,
+            token,
+          })
+          .catch(() => {
+            // Best-effort rollback; a background reconciliation can fix any rare mismatch.
+          });
       }
 
       if (bookingError.response?.status === 400) {
@@ -503,7 +551,10 @@ exports.streamMyAppointments = async (req, res) => {
     res.write(`data: ${JSON.stringify(payload)}\n\n`);
   };
 
-  writeEvent("connected", { success: true, timestamp: new Date().toISOString() });
+  writeEvent("connected", {
+    success: true,
+    timestamp: new Date().toISOString(),
+  });
 
   try {
     const appointments = await appointmentService.findByPatientId(patientId);
@@ -564,7 +615,10 @@ exports.streamDoctorAppointments = async (req, res) => {
     res.write(`data: ${JSON.stringify(payload)}\n\n`);
   };
 
-  writeEvent("connected", { success: true, timestamp: new Date().toISOString() });
+  writeEvent("connected", {
+    success: true,
+    timestamp: new Date().toISOString(),
+  });
 
   try {
     const appointments = await appointmentService.findByDoctorId(doctorId);

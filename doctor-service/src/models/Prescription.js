@@ -63,7 +63,7 @@ const prescriptionSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ["issued", "filled", "expired"],
+      enum: ["issued", "filled", "expired", "cancelled"],
       default: "issued",
       index: true,
     },

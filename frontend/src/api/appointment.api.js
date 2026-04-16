@@ -40,8 +40,7 @@ export const rescheduleAppointment = async (appointmentId, payload) => {
 };
 
 export const deleteAppointment = async (appointmentId) => {
-  const response = await API.delete(`/appointments/${appointmentId}/delete`);
-  return unwrapData(response);
+  return cancelAppointment(appointmentId);
 };
 
 export const getAllAppointments = async () => {
