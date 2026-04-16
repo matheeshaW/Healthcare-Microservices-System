@@ -6,8 +6,7 @@ const { sendNotification } = require('../services/rabbitmqService');
 exports.createCheckoutSession = async (req, res) => {
     try {
         const { appointmentId } = req.body;
-        const stripe = require('stripe')('sk_test_51TMmmWKHHAALCwYCycNPzVicwTPGBu9PKXm7CaoTsBzpctmDpyhMTLcr9g1eVTWB2F0BVT5FdMjJbjnOB6dNefmB00DpsLHUyw');
-        
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);        
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{

@@ -97,10 +97,12 @@ services:
       - "5005:5005"
     environment:
       PORT: 5005
-      MONGO_URI: mongodb://admin:password@mongodb:27017/payment-service?authSource=admin
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      MONGO_URI: mongodb+srv://admin:1234@cluster0.c6a4y.mongodb.net/healthcare
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      # This looks for the key in your .env file
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
     depends_on:
-      - mongodb
+      - mongodb  # Changed from hms-mongodb to match your previous snippet
       - rabbitmq
     networks:
       - hms-network
