@@ -165,13 +165,6 @@ export const AdminDashboard = () => {
             >
               Verify Doctors
             </Button>
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => navigate("/admin/doctors")}
-            >
-              Manage Doctors
-            </Button>
           </div>
         </Card>
       )}

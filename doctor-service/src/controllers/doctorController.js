@@ -329,7 +329,6 @@ exports.registerDoctor = async (req, res) => {
   try {
     const {
       userId,
-      email,
       name,
       specialization,
       experience,
@@ -341,7 +340,6 @@ exports.registerDoctor = async (req, res) => {
     // Validate required fields
     if (
       !userId ||
-      !email ||
       !name ||
       !specialization ||
       !experience ||
@@ -363,12 +361,12 @@ exports.registerDoctor = async (req, res) => {
       });
     }
 
-    // Check if doctor with this email already exists
-    const existingDoctor = await Doctor.findOne({ email });
+    // Check if doctor profile for this user already exists
+    const existingDoctor = await Doctor.findOne({ userId });
     if (existingDoctor && existingDoctor.isActive) {
       return res.status(400).json({
         success: false,
-        message: "Doctor profile already exists for this email.",
+        message: "Doctor profile already exists for this user.",
       });
     }
 
@@ -384,7 +382,6 @@ exports.registerDoctor = async (req, res) => {
     // Create new doctor profile (pending verification)
     const doctor = new Doctor({
       userId,
-      email,
       name,
       specialization,
       experience,

@@ -201,54 +201,10 @@ function App() {
         />
 
         <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <DashboardLayout userRole="admin">
-                <AdminDashboard />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <DashboardLayout userRole="admin">
-                <UserList />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/verify-doctors"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <DashboardLayout userRole="admin">
-                <DoctorVerification />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/admin"
           element={
             <ProtectedRoute roles={["admin"]}>
               <Navigate to="/admin/dashboard" replace />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <Home />
-              </DashboardLayout>
             </ProtectedRoute>
           }
         />

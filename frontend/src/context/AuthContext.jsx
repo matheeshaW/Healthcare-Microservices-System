@@ -25,18 +25,15 @@ export const AuthProvider = ({ children }) => {
     // Check if user is a doctor and verify their profile is approved
     if (res.data.user.role === "doctor") {
       try {
-        // Set token temporarily to make authenticated request
-        const tempToken = res.data.token;
-        API.defaults.headers.common["Authorization"] = `Bearer ${tempToken}`;
-
-        // Fetch doctor profile to check verification status
-        const doctorRes = await API.get("/doctors/me");
+        // Fetch doctor profile to check verification status using a per-request header
+        const doctorRes = await API.get("/doctors/me", {
+          headers: {
+            Authorization: `Bearer ${res.data.token}`,
+          },
+        });
 
         // If doctor profile is not verified, reject login
         if (!doctorRes.data.data.verified) {
-          // Clear the temporary token
-          delete API.defaults.headers.common["Authorization"];
-
           const error = new Error(
             "Your doctor profile is pending admin verification. Please wait until an admin verifies your credentials.",
           );
@@ -52,7 +49,7 @@ export const AuthProvider = ({ children }) => {
         // Clear any stored data
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        delete API.defaults.headers.common["Authorization"];
+
         throw err;
       }
     }
@@ -71,6 +68,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    delete API.defaults.headers.common["Authorization"];
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
