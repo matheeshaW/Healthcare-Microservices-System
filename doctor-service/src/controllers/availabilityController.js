@@ -29,14 +29,14 @@ const getEndOfDay = (date) => {
   return endOfDay;
 };
 
-// Get next Monday's date
+// Get the current week's Monday date
 const getNextWeekStartDate = () => {
   const today = new Date();
   const dayOfWeek = today.getDay();
-  const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek; // If Sunday, 1 day; otherwise calculate
-  const nextMonday = new Date(today);
-  nextMonday.setDate(today.getDate() + daysUntilMonday);
-  return getStartOfDay(nextMonday); // Normalize to start of day
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday belongs to the week ending on Sunday
+  const currentWeekMonday = new Date(today);
+  currentWeekMonday.setDate(today.getDate() - daysSinceMonday);
+  return getStartOfDay(currentWeekMonday); // Normalize to start of day
 };
 
 // Save or update weekly availability (handles day-based format from frontend)
@@ -69,15 +69,56 @@ exports.saveWeeklyAvailability = async (req, res) => {
 
     // Get the start date (next Monday)
     const weekStartDate = getNextWeekStartDate();
-    let savedCount = 0;
-    const results = [];
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekStartDate.getDate() + 7);
+    const weekEndDateMidnight = getStartOfDay(weekEndDate);
 
+    // Fetch all existing records for this week
+    const existingRecords = await Availability.find({
+      doctorId: doctor._id,
+      date: {
+        $gte: weekStartDate,
+        $lt: weekEndDateMidnight,
+      },
+    });
+
+    // Determine which days are in the request
+    const requestedDays = new Set(availability.map((d) => d.day));
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+
+    // Delete records for days NOT in the request (stale records)
+    const recordsToDelete = existingRecords.filter((record) => {
+      const recordDay = days[record.date.getDay()];
+      return !requestedDays.has(recordDay);
+    });
+
+    let deletedCount = 0;
+    for (const record of recordsToDelete) {
+      await Availability.findByIdAndDelete(record._id);
+      deletedCount++;
+    }
+
+    // Log cleanup
     console.log("📝 Saving availability for doctor:", doctor._id);
     console.log("📅 Week start date:", weekStartDate);
     console.log(
       "📊 Received availability data:",
       JSON.stringify(availability, null, 2),
     );
+    if (deletedCount > 0) {
+      console.log(`🗑️  Deleted ${deletedCount} stale records`);
+    }
+
+    let savedCount = 0;
+    const results = [];
 
     // Process each day
     for (const dayData of availability) {
@@ -85,14 +126,14 @@ exports.saveWeeklyAvailability = async (req, res) => {
 
       // Skip if day is not provided
       if (!day) {
-        console.log("⏭️  Skipping - no day name provided");
+        console.log("Skipping - no day name provided");
         continue;
       }
 
       // Calculate the date for this day
       const dayIndex = getDayIndex(day);
       if (dayIndex === -1) {
-        console.log(`⏭️  Skipping - invalid day name: ${day}`);
+        console.log(`Skipping - invalid day name: ${day}`);
         continue; // Invalid day name
       }
 
@@ -103,16 +144,18 @@ exports.saveWeeklyAvailability = async (req, res) => {
       const dateStartOfDay = getStartOfDay(availabilityDate);
       const dateEndOfDay = getEndOfDay(availabilityDate);
 
-      // Format slots - handle both empty and filled slots
+      // Format slots - preserve available flag and initialize booking fields
       const formattedSlots = Array.isArray(slots)
         ? slots.map((slot) => ({
             time: slot.time,
+            available: slot.available !== false, // Preserve doctor's availability marking
             isBooked: false,
+            appointmentId: null,
           }))
         : [];
 
       console.log(
-        `📅 ${day} (${availabilityDate.toDateString()}): ${formattedSlots.length} slots`,
+        `${day} (${availabilityDate.toDateString()}): ${formattedSlots.length} slots`,
       );
       console.log(
         `   Query range: ${dateStartOfDay.toISOString()} to ${dateEndOfDay.toISOString()}`,
@@ -128,16 +171,33 @@ exports.saveWeeklyAvailability = async (req, res) => {
       });
 
       if (availabilityRecord) {
-        // Update existing
-        console.log(
-          `  ✏️  Updating existing record: ${availabilityRecord._id}`,
+        // Merge new slots with existing, preserving booked appointments
+        const existingSlotMap = new Map(
+          availabilityRecord.slots.map((s) => [s.time, s]),
         );
-        availabilityRecord.slots = formattedSlots;
+
+        const mergedSlots = formattedSlots.map((newSlot) => {
+          const existing = existingSlotMap.get(newSlot.time);
+          if (existing && existing.isBooked) {
+            // Preserve booked appointment - don't allow overwrites of locked slots
+            return {
+              time: newSlot.time,
+              available: newSlot.available,
+              isBooked: true,
+              appointmentId: existing.appointmentId,
+            };
+          }
+          // New slot or unbooked existing slot - use incoming values
+          return newSlot;
+        });
+
+        availabilityRecord.slots = mergedSlots;
+        console.log(`  Updating existing record: ${availabilityRecord._id}`);
         await availabilityRecord.save();
       } else {
         // Create new
         console.log(
-          `  ✨ Creating new record for ${dateStartOfDay.toISOString()}`,
+          `  Creating new record for ${dateStartOfDay.toISOString()}`,
         );
         availabilityRecord = new Availability({
           doctorId: doctor._id,
@@ -151,7 +211,7 @@ exports.saveWeeklyAvailability = async (req, res) => {
       savedCount++;
     }
 
-    console.log(`✅ Saved availability for ${savedCount} days`);
+    console.log(`Saved availability for ${savedCount} days`);
 
     res.status(201).json({
       success: true,
@@ -159,7 +219,7 @@ exports.saveWeeklyAvailability = async (req, res) => {
       message: `Availability saved for ${savedCount} days`,
     });
   } catch (error) {
-    console.error("❌ Error saving weekly availability:", error);
+    console.error("Error saving weekly availability:", error);
     res.status(500).json({
       success: false,
       message: "Server error while saving availability",
@@ -190,7 +250,7 @@ exports.getMyWeeklyAvailability = async (req, res) => {
     weekEndDate.setDate(weekStartDate.getDate() + 7);
     const weekEndDateMidnight = getStartOfDay(weekEndDate); // Start of Sunday next week
 
-    console.log("📥 Loading availability...");
+    console.log("Loading availability...");
     console.log(
       `   Week range: ${weekStartDate.toISOString()} to ${weekEndDateMidnight.toISOString()}`,
     );
@@ -257,11 +317,11 @@ exports.getMyWeeklyAvailability = async (req, res) => {
         console.log(`     ✗ No match found`);
       }
 
-      // Transform slots to use 'available' property instead of 'isBooked'
+      // Transform slots to use 'available' property from storage, not computed from isBooked
       const transformedSlots =
         dayAvailability?.slots.map((slot) => ({
           time: slot.time,
-          available: !slot.isBooked, // Convert isBooked to available (opposite)
+          available: slot.available !== false, // Use stored flag, default to true for backward compat
         })) || [];
 
       weeklyAvailability.push({
@@ -413,6 +473,7 @@ exports.updateAvailability = async (req, res) => {
     // Booking must go through bookSlot/releaseSlot endpoints
     const sanitizedSlots = slots.map((slot) => ({
       time: slot.time,
+      available: slot.available !== false, // Preserve doctor's availability marking
       // NEVER allow direct setting of booking state from client
       // These are managed by bookSlot and releaseSlot only
       isBooked: false, // Force reset (or preserve existing)
