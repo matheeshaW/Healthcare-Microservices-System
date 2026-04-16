@@ -16,6 +16,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAppointments from "./pages/admin/AdminAppointments";
 import UserList from "./pages/admin/UserList";
 import DoctorVerification from "./pages/admin/DoctorVerification";
 
@@ -183,6 +184,17 @@ function App() {
             <ProtectedRoute roles={["admin"]}>
               <DashboardLayout userRole="admin">
                 <DoctorVerification />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/appointments"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <DashboardLayout userRole="admin">
+                <AdminAppointments />
               </DashboardLayout>
             </ProtectedRoute>
           }
