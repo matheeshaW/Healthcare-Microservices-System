@@ -5,7 +5,8 @@ const { authenticate } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
 const {
   upsertProfile,
-  getProfile
+  getProfile,
+  getUserById
 } = require("../controllers/patientController");
 
 // Only PATIENT can access
@@ -21,6 +22,13 @@ router.get(
   authenticate,
   authorize("patient"),
   getProfile
+);
+
+router.get(
+  "/users/:userId",
+  authenticate,
+  authorize("doctor", "admin"),
+  getUserById
 );
 
 module.exports = router;
