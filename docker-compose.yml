@@ -114,10 +114,10 @@ services:
       - "5004:5004"
     environment:
       PORT: 5004
-      MONGO_URI: mongodb://admin:password@mongodb:27017/notification-service?authSource=admin
-      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-      EMAIL_USER: ${EMAIL_USER:-}
-      EMAIL_PASS: ${EMAIL_PASS:-}
+      MONGO_URI: mongodb+srv://admin:1234@cluster0.c6a4y.mongodb.net/healthcare
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      EMAIL_USER: warurandima6@gmail.com
+      EMAIL_PASS: "pqcg bppq drkp hbta"
     depends_on:
       - mongodb
       - rabbitmq

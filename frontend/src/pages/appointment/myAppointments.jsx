@@ -18,7 +18,9 @@ function MyAppointments() {
   const [payingId, setPayingId] = useState(null);
   const [paidAppointmentIds, setPaidAppointmentIds] = useState([]); 
 
-
+  // ============================================
+  // FETCH PAYMENT STATUS
+  // ============================================
   const fetchPaymentStatus = useCallback(async () => {
     if (!user) return;
     try {
@@ -34,7 +36,9 @@ function MyAppointments() {
     }
   }, [user]);
 
-
+  // ============================================
+  // SUCCESS PAGE LOGIC (Returns from Stripe)
+  // ============================================
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
     const appointmentId = searchParams.get("appointmentId");
@@ -44,18 +48,27 @@ function MyAppointments() {
         try {
           setNotice("Verifying payment and generating receipt...");
           
+          // GRAB THE DOCTOR ID SAVED BEFORE REDIRECT
+          const savedDoctorId = localStorage.getItem("pending_doctor_id");
+          
           await confirmPaymentToDB({
             appointmentId: appointmentId,
             patientId: user._id || user.id,
             patientEmail: user.email,
-            amount: 2500 
+            amount: 2500,
+            doctorId: savedDoctorId || "UNKNOWN_DOC" // Fallback to prevent crash
           });
 
-          // Redirect to the new Payment History page
+          // CLEANUP
+          localStorage.removeItem("pending_doctor_id");
+          setSearchParams({}); 
+          
+          // Refresh data and redirect
+          await fetchPaymentStatus();
           navigate("/patient/payments?status=success");
         } catch (err) {
-          console.error(err);
-          setNotice("Payment confirmed, but history update failed.");
+          console.error("Finalization failed:", err);
+          setNotice("Payment verified, but history update failed.");
         }
       };
       finalizeTransaction();
@@ -63,20 +76,20 @@ function MyAppointments() {
       setNotice("Payment was cancelled.");
       setSearchParams({});
     }
-  }, [searchParams, user, navigate, setSearchParams]);
+  }, [searchParams, user, navigate, setSearchParams, fetchPaymentStatus]);
 
-
+  // ============================================
+  // DATA LOADING
+  // ============================================
   useEffect(() => {
     let isMounted = true;
 
     const loadAppointments = async () => {
       const result = await fetchMine();
-      await fetchPaymentStatus(); // Also fetch payment history
+      await fetchPaymentStatus();
 
       if (!isMounted || result.length === 0) {
-        if (isMounted) {
-          setDoctorNames({});
-        }
+        if (isMounted) setDoctorNames({});
         return;
       }
 
@@ -99,33 +112,31 @@ function MyAppointments() {
     };
 
     loadAppointments();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [fetchMine, fetchPaymentStatus]);
 
-
+  // ============================================
+  // ACTION HANDLERS
+  // ============================================
   const handleCancel = async (appointmentId) => {
-    const shouldCancel = window.confirm("Cancel this appointment?");
-
-    if (!shouldCancel) {
-      return;
-    }
-
+    if (!window.confirm("Cancel this appointment?")) return;
     try {
       await cancelMine(appointmentId);
       setNotice("Appointment cancelled successfully.");
-    } catch {
-      // Hook already stores error state used below.
-    }
+    } catch (err) { console.error(err); }
   };
-
 
   const handlePayment = async (appointmentId) => {
     try {
       setPayingId(appointmentId);
       setNotice("");
+      
+      // 1. Find the appointment in Member 3's data to get the doctorId
+      const targetAppointment = appointments.find(a => a._id === appointmentId);
+      if (targetAppointment) {
+        // 2. Save it to localStorage so it survives the Stripe redirect
+        localStorage.setItem("pending_doctor_id", targetAppointment.doctorId);
+      }
       
       const data = await createCheckoutSession(appointmentId);
       
@@ -140,18 +151,16 @@ function MyAppointments() {
     }
   };
 
- 
   const upcomingCount = appointments.filter((item) => item.status !== "cancelled").length;
   const cancelledCount = appointments.filter((item) => item.status === "cancelled").length;
 
   return (
-    <section className="mx-auto max-w-4xl">
+    <section className="mx-auto max-w-4xl p-4">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My Appointments</h1>
           <p className="text-sm text-slate-600">Review and manage your scheduled visits.</p>
         </div>
-
         <Link
           to="/appointment/book"
           className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700"
@@ -162,11 +171,11 @@ function MyAppointments() {
 
       <div className="mb-4 grid gap-3 md:grid-cols-3">
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Total appointments</p>
+          <p className="text-sm text-slate-500">Total</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{appointments.length}</p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Active or completed</p>
+          <p className="text-sm text-slate-500">Active</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{upcomingCount}</p>
         </article>
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -181,19 +190,11 @@ function MyAppointments() {
         </div>
       )}
 
-      {loading && (
+      {loading ? (
         <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-700">
           Loading appointments...
         </div>
-      )}
-
-      {!loading && error && (
-        <div className="mb-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
-        </div>
-      )}
-
-      {!loading && (
+      ) : (
         <AppointmentList
           appointments={appointments}
           doctorNames={doctorNames}

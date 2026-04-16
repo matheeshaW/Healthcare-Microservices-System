@@ -4,7 +4,7 @@
  * Responsive design for desktop and mobile
  */
 
-import { useContext } from "react";
+import { useContext ,useState, useEffect} from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -14,7 +14,29 @@ export function Sidebar({
 }) {
   const { user } = useContext(AuthContext);
   const location = useLocation();
-
+  const [hasPaidAppointments, setHasPaidAppointments] = useState(false);
+// ============================================
+  // FETCH PAYMENT STATUS (For Patients)
+  // ============================================
+  useEffect(() => {
+    const checkPayments = async () => {
+      if (user?.role === "patient") {
+        try {
+          const userId = user._id || user.id;
+          const res = await fetch(`http://localhost:5005/api/payment/history/${userId}`);
+          const data = await res.json();
+          
+          // Show Telemedicine if at least one successful payment exists
+          if (data.success && data.data.length > 0) {
+            setHasPaidAppointments(true);
+          }
+        } catch (err) {
+          console.error("Sidebar payment check failed", err);
+        }
+      }
+    };
+    checkPayments();
+  }, [user]);
   // ============================================
   // MENU ITEMS BY ROLE
   // ============================================
@@ -26,7 +48,7 @@ export function Sidebar({
       { label: "My Profile", icon: "user", path: "/doctor/profile", badge: null },
       { label: "Manage Availability", icon: "calendar", path: "/doctor/availability", badge: null },
       { label: "My Prescriptions", icon: "document", path: "/doctor/prescriptions", badge: null },
-      { label: "Telemedicine", icon: "video", path: "/telemedicine", badge: "New" },
+      { label: "Telemedicine", icon: "video", path: "/telemedicine" },
     ];
 
     const patientMenu = [
@@ -64,6 +86,15 @@ export function Sidebar({
       },
       { label: "Payment History", icon: "chart", path: "/patient/payments", badge: null },
     ];
+    // Push Telemedicine to patient menu ONLY if they have paid
+    if (user?.role === "patient" && hasPaidAppointments) {
+      patientMenu.push({ 
+        label: "Telemedicine", 
+        icon: "video", 
+        path: "/telemedicine",
+       
+      });
+    }
 
     const adminMenu = [
       { label: "Home", icon: "grid", path: "/home", badge: null },

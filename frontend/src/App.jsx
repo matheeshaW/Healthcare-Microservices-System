@@ -6,7 +6,6 @@ import MyAppointments from "./pages/appointment/myAppointments";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import DoctorProfile from "./pages/doctor/DoctorProfile";
 import ManageAvailability from "./pages/doctor/ManageAvailability";
-import MyPrescriptions from "./pages/doctor/MyPrescriptions"; // Re-added from HEAD
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -14,7 +13,7 @@ import MyReports from "./pages/patient/MyReports";
 import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientProfile from "./pages/patient/PatientProfile";
 import ProtectedRoute from "./routes/ProtectedRoute";
-import PaymentHistory from "./pages/patient/PaymentHistory";
+import PaymentHistory from "./pages/patient/PaymentHistory"; // Only declare once
 
 // Merged Imports: Both Telemedicine and Admin Pages
 import VideoSession from './pages/telemedicine/VideoSession';
@@ -23,7 +22,6 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAppointments from "./pages/admin/AdminAppointments";
 import UserList from "./pages/admin/UserList";
 import DoctorVerification from "./pages/admin/DoctorVerification";
-import PaymentHistory from "./pages/patient/PaymentHistory";
 
 function App() {
   return (
@@ -85,6 +83,7 @@ function App() {
           }
         />
 
+        {/* Payment History Route (Keep this one) */}
         <Route
           path="/patient/payments"
           element={
@@ -164,7 +163,7 @@ function App() {
           }
         />
 
-        <Route
+        {/* <Route
           path="/doctor/prescriptions"
           element={
             <ProtectedRoute roles={["doctor"]}>
@@ -173,7 +172,7 @@ function App() {
               </DashboardLayout>
             </ProtectedRoute>
           }
-        />
+        /> */}
 
         {/* Telemedicine Routes */}
         <Route 
@@ -241,18 +240,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* --- Payment History Route --- */}
-<Route
-  path="/patient/payments"
-  element={
-    <ProtectedRoute roles={["patient"]}>
-      <DashboardLayout userRole="patient">
-        <PaymentHistory />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
-        
 
         {/* 404 Catch-All */}
         <Route

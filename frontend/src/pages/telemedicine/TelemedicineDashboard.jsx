@@ -1,153 +1,104 @@
-import { useEffect, useState, useContext, useCallback } from "react";
+import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import useAppointments from "../../hooks/useAppointments";
-import { getDoctorById } from "../../api/appointment.api";
+import { useNavigate } from "react-router-dom";
 
-/**
- * TelemedicineDashboard Component
- * Filters and displays confirmed appointments for virtual sessions.
- */
-function TelemedicineDashboard() {
+function TelemedicinePortal() {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const { fetchMine, loading } = useAppointments();
-
-  const [allSessions, setAllSessions] = useState([]);
-  const [filter, setFilter] = useState("today");
-  const [doctorNames, setDoctorNames] = useState({});
-
-  // ==========================================
-  // DATA LOADING LOGIC
-  // ==========================================
-  const loadData = useCallback(async () => {
-    const data = await fetchMine();
-
-    // Only show "Confirmed" appointments for telemedicine
-    const confirmed = data.filter((app) => app.status === "confirmed");
-    setAllSessions(confirmed);
-
-    // Fetch Doctor Names for Patients to improve UI
-    if (user?.role === "patient") {
-      const uniqueDocs = [...new Set(confirmed.map((a) => a.doctorId))];
-      const nameMap = {};
-      for (const id of uniqueDocs) {
-        try {
-          const doc = await getDoctorById(id);
-          nameMap[id] = doc.name;
-        } catch (e) {
-          nameMap[id] = "Specialist";
-        }
-      }
-      setDoctorNames(nameMap);
-    }
-  }, [user, fetchMine]);
+  const [paidSessions, setPaidSessions] = useState([]);
+  const [appointmentDetails, setAppointmentDetails] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) loadData();
-  }, [user, loadData]);
+    const fetchAllData = async () => {
+      if (!user) return;
+      try {
+        setLoading(true);
+        const userId = user._id || user.id;
+        const role = user.role;
 
-  // ==========================================
-  // FILTERING LOGIC
-  // ==========================================
-  const filteredSessions = allSessions.filter((session) => {
-    const sessionDate = new Date(session.date).setHours(0, 0, 0, 0);
-    const today = new Date().setHours(0, 0, 0, 0);
-    return filter === "today" ? sessionDate === today : sessionDate > today;
-  });
+        // 1. Fetch Payments from Port 5005
+        const res = await fetch(`http://localhost:5005/api/payment/history/${userId}?role=${role}`);
+        const result = await res.json();
 
-  // ==========================================
-  // RENDER
-  // ==========================================
+        if (result.success && Array.isArray(result.data)) {
+          setPaidSessions(result.data);
+          
+          // 2. Fetch rich details for each appointment from Port 5002
+          const detailsMap = {};
+          await Promise.all(result.data.map(async (payment) => {
+            try {
+              const apptRes = await fetch(`http://localhost:5002/api/appointments/${payment.appointmentId}`);
+              if (apptRes.ok) {
+                const apptData = await apptRes.json();
+                detailsMap[payment.appointmentId] = apptData;
+              }
+            } catch (err) {
+              console.warn(`Could not fetch details for ${payment.appointmentId}`);
+            }
+          }));
+          setAppointmentDetails(detailsMap);
+        }
+      } catch (err) {
+        console.error("Portal Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, [user]);
+
+  if (loading) return <div className="p-20 text-center animate-pulse text-cyan-600 font-bold">Syncing Portals...</div>;
+
   return (
-    <section className="p-4 md:p-8 max-w-4xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">Telemedicine Portal</h1>
-        <p className="text-slate-500 text-sm mt-1">Join your virtual consultations and manage your schedule.</p>
-      </header>
-
-      {/* Tab Navigation */}
-      <div className="flex gap-8 mb-6 border-b border-slate-200">
-        {["today", "upcoming"].map((t) => (
-          <button
-            key={t}
-            onClick={() => setFilter(t)}
-            className={`pb-3 px-2 font-bold text-sm uppercase tracking-wider transition ${
-              filter === t ? "border-b-2 border-cyan-600 text-cyan-600" : "text-slate-400 hover:text-slate-600"
-            }`}
-          >
-            {t === "today" ? "Today's Calls" : "Future Schedule"}
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-white rounded-3xl border border-slate-200 p-2 md:p-6 shadow-sm">
-        {loading ? (
-          <div className="py-20 text-center text-slate-400 animate-pulse">
-            Checking for active sessions...
-          </div>
-        ) : filteredSessions.length > 0 ? (
-          <div className="space-y-3">
-            {filteredSessions.map((session) => {
-              const isPaid = session.paymentStatus === "Paid";
-              const isToday = filter === "today";
-
-              return (
-                <div
-                  key={session._id}
-                  className="group flex items-center justify-between p-5 border border-slate-100 rounded-2xl hover:border-cyan-200 hover:bg-cyan-50/30 transition-all"
-                >
-                  <div className="flex items-center gap-4">
-                    {isToday && (
-                      <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                      </span>
-                    )}
-                    <div>
-                      <p className="font-bold text-slate-900">
-                        {user?.role === "patient"
-                          ? `Dr. ${doctorNames[session.doctorId] || "Specialist"}`
-                          : `Patient ID: ...${session.patientId.slice(-6)}`}
-                      </p>
-                      <p className="text-sm text-slate-500 font-medium">
-                        {session.time} <span className="mx-1 text-slate-300">|</span> {new Date(session.date).toLocaleDateString()}
-                      </p>
-                    </div>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6 text-slate-800">Telemedicine Portal</h1>
+      <div className="grid gap-4">
+        {paidSessions.length > 0 ? (
+          paidSessions.map((payment) => {
+            const details = appointmentDetails[payment.appointmentId];
+            
+            return (
+              <div key={payment._id} className="p-5 border-2 border-cyan-100 rounded-2xl flex justify-between items-center bg-white shadow-sm hover:border-cyan-400 transition">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold bg-emerald-500 text-white px-2 py-0.5 rounded uppercase">Verified</span>
+                  
+                  {/* If details haven't loaded, we show the ID as a fallback */}
+                  <p className="font-bold text-slate-900 text-lg">
+                    {user.role === 'doctor' 
+                      ? `Patient: ${details?.patientName || "User " + payment.patientId.slice(-4)}` 
+                      : `Doctor: ${details?.doctorName || "Consultant"}`}
+                  </p>
+                  
+                  <div className="flex items-center gap-3 text-sm text-slate-600">
+                    <span>📅 {details?.date || "Date Pending"}</span>
+                    <span>⏰ {details?.time || "Time Pending"}</span>
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    {!isPaid && user?.role === "patient" && (
-                      <span className="hidden md:block text-[10px] font-black bg-amber-100 text-amber-700 px-2 py-1 rounded uppercase">
-                        Payment Required
-                      </span>
-                    )}
-                    <button
-                      onClick={() => (window.location.href = `/telemedicine/session/${session._id}`)}
-                      disabled={user?.role === "patient" && !isPaid}
-                      className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition transform active:scale-95 ${
-                        user?.role === "patient" && !isPaid
-                          ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                          : "bg-cyan-600 text-white shadow-md hover:bg-cyan-700"
-                      }`}
-                    >
-                      📹 Join Call
-                    </button>
-                  </div>
+                  
+                  <p className="text-[11px] text-slate-400 font-mono mt-2">TXN: {payment.transactionId}</p>
                 </div>
-              );
-            })}
-          </div>
+
+                <div className="flex flex-col items-end gap-3">
+                  <span className="font-bold text-slate-800">Rs. {payment.amount}</span>
+                  <button
+                    className="bg-cyan-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-cyan-700 shadow-lg shadow-cyan-100 transition"
+                    onClick={() => navigate(`/telemedicine/session/${payment.appointmentId}`)}
+                  >
+                    Join Call
+                  </button>
+                </div>
+              </div>
+            );
+          })
         ) : (
-          <div className="text-center py-20">
-            <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-              📅
-            </div>
-            <p className="text-slate-500 font-medium">No consultations found for {filter}.</p>
-            <p className="text-slate-400 text-xs mt-1">Confirmed appointments will appear here automatically.</p>
+          <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed text-slate-400">
+            No paid consultations found.
           </div>
         )}
       </div>
-    </section>
+    </div>
   );
 }
 
-export default TelemedicineDashboard;
+export default TelemedicinePortal;
