@@ -69,12 +69,25 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
 
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-linear-to-br from-cyan-600 to-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">H</span>
+              <div className="w-10 h-10 bg-linear-to-br from-cyan-600 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
+                {/* Medical Plus Icon */}
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-lg font-bold text-slate-900">Healthcare</h1>
-                <p className="text-xs text-slate-600">Microservices</p>
+                <p className="text-xs text-slate-600">Management System</p>
               </div>
             </div>
           </div>
