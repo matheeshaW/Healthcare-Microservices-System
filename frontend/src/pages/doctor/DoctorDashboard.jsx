@@ -420,9 +420,18 @@ export const DoctorDashboard = () => {
 
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-slate-900">
-          Real Patient Appointments
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-900">
+            Real Patient Appointments
+          </h3>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setAppointmentsRefreshKey((current) => current + 1)}
+          >
+            Refresh
+          </Button>
+        </div>
 
         {appointments.length === 0 ? (
           <Card padding="lg" className="text-center">

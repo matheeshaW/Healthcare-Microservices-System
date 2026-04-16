@@ -14,7 +14,11 @@ exports.createAppointment = async (req, res) => {
       token,
     });
 
-    const slotRef = appointmentService.findMatchingSlot(availabilities, date, time);
+    const slotRef = appointmentService.findMatchingSlot(
+      availabilities,
+      date,
+      time,
+    );
 
     if (!slotRef) {
       return res.status(409).json({
@@ -58,7 +62,10 @@ exports.createAppointment = async (req, res) => {
     }
 
     rabbitmqService.publishAppointmentCreated(appointment).catch((error) => {
-      console.warn("Failed to publish appointment.created event:", error.message);
+      console.warn(
+        "Failed to publish appointment.created event:",
+        error.message,
+      );
     });
 
     return res.status(201).json({
@@ -177,11 +184,13 @@ exports.updateAppointmentStatus = async (req, res) => {
     }
 
     if (status === "cancelled") {
-      const availabilities = await appointmentService.fetchDoctorAvailabilities({
-        doctorId: appointment.doctorId,
-        date: appointment.date,
-        token,
-      });
+      const availabilities = await appointmentService.fetchDoctorAvailabilities(
+        {
+          doctorId: appointment.doctorId,
+          date: appointment.date,
+          token,
+        },
+      );
 
       const slotRef = appointmentService.findBookedSlotForAppointment(
         availabilities,
@@ -252,47 +261,50 @@ exports.cancelAppointment = async (req, res) => {
       });
     }
 
-    // patient can cancel only own appointment (admin can cancel any)
-    if (
-      req.user.role === "patient" &&
-      String(appointment.patientId) !== String(req.user.id)
-    ) {
+    // ADMIN deletion: Simply delete from database, no slot release needed
+    if (req.user.role === "admin") {
+      await appointmentService.deleteById(id);
+      return res.json({
+        success: true,
+        data: appointment,
+        message: "Appointment deleted",
+      });
+    }
+
+    // PATIENT cancellation: Mark as cancelled (not currently allowed in routes, but keep for safety)
+    if (String(appointment.patientId) !== String(req.user.id)) {
       return res.status(403).json({
         success: false,
         message: "Access denied",
       });
     }
 
-    const availabilities = await appointmentService.fetchDoctorAvailabilities({
-      doctorId: appointment.doctorId,
-      date: appointment.date,
-      token,
-    });
+    // Try to release doctor slot (non-critical)
+    try {
+      const availabilities = await appointmentService.fetchDoctorAvailabilities(
+        {
+          doctorId: appointment.doctorId,
+          date: appointment.date,
+          token,
+        },
+      );
 
-    const slotRef = appointmentService.findBookedSlotForAppointment(
-      availabilities,
-      appointment.date,
-      appointment.time,
-      appointment._id,
-    );
+      const slotRef = appointmentService.findBookedSlotForAppointment(
+        availabilities,
+        appointment.date,
+        appointment.time,
+        appointment._id,
+      );
 
-    if (slotRef) {
-      try {
+      if (slotRef) {
         await appointmentService.releaseDoctorSlot({
           availabilityId: slotRef.availabilityId,
           slotIndex: slotRef.slotIndex,
           token,
         });
-      } catch (releaseError) {
-        if (releaseError.response || releaseError.code === "ECONNABORTED") {
-          return res.status(503).json({
-            success: false,
-            message: "Doctor service is unavailable",
-          });
-        }
-
-        throw releaseError;
       }
+    } catch (slotError) {
+      console.warn("Could not release slot:", slotError.message);
     }
 
     appointment.status = "cancelled";
