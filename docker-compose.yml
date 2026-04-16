@@ -158,6 +158,7 @@ services:
       NOTIFICATION_SERVICE_URL: http://notification-service:5004
       PAYMENT_SERVICE_URL: http://payment-service:5005
       TELEMEDICINE_SERVICE_URL: http://telemedicine-service:5006
+      NOTIFICATION_SERVICE_URL: http://notification-service:5004
     depends_on:
       - patient-service
       - doctor-service
