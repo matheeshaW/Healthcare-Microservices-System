@@ -23,6 +23,12 @@ export function Sidebar({
   const getMenuItems = () => {
     const doctorMenu = [
       {
+        label: "Home",
+        icon: "grid",
+        path: "/home",
+        badge: null,
+      },
+      {
         label: "Dashboard",
         icon: "grid",
         path: "/doctor/dashboard",
@@ -49,7 +55,7 @@ export function Sidebar({
     ];
 
     const patientMenu = [
-      { label: "Dashboard", icon: "grid", path: "/dashboard", badge: null },
+      { label: "Home", icon: "grid", path: "/home", badge: null },
       {
         label: "My Profile",
         icon: "user",
@@ -77,6 +83,12 @@ export function Sidebar({
     ];
 
     const adminMenu = [
+      {
+        label: "Home",
+        icon: "grid",
+        path: "/home",
+        badge: null,
+      },
       {
         label: "Dashboard",
         icon: "grid",

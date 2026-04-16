@@ -1,9 +1,12 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import DashboardLayout from "./components/layout/DashboardLayout";
-import Dashboard from "./pages/Dashboard";
-import AppointmentDetail from "./pages/appointment/appointmentDetail";
-import BookAppointment from "./pages/appointment/bookAppointment";
-import MyAppointments from "./pages/appointment/myAppointments";
+import Home from "./pages/Home";
+
+// Patient Pages
+import PatientProfile from "./pages/patient/PatientProfile";
+import MyReports from "./pages/patient/MyReports";
+
+// Doctor Pages
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import DoctorProfile from "./pages/doctor/DoctorProfile";
 import ManageAvailability from "./pages/doctor/ManageAvailability";
@@ -145,6 +148,39 @@ function App() {
                 <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
               </DashboardLayout>
             </ProtectedRoute>
+          }
+        />
+
+        
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Home />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/dashboard" element={<Navigate to="/home" replace />} />
+
+        {/* 404 Not Found */}
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+              <div className="text-center space-y-4">
+                <h1 className="text-6xl font-bold text-slate-900">404</h1>
+                <p className="text-xl text-slate-600">Page not found</p>
+                <Link
+                  to="/login"
+                  className="inline-block px-6 py-3 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition"
+                >
+                  Back to Login
+                </Link>
+              </div>
+            </div>
           }
         />
       </Routes>

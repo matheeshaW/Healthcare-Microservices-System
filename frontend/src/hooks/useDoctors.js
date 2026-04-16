@@ -22,6 +22,7 @@ export const useDoctors = () => {
   const [error, setError] = useState(null);
   const [searchError, setSearchError] = useState(null);
   const [profileError, setProfileError] = useState(null);
+  const [profileNotFound, setProfileNotFound] = useState(false);
 
   // Filter/search state
   const [filters, setFilters] = useState({
@@ -51,7 +52,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to fetch doctors";
       setError(errorMessage);
       console.error("Error fetching doctors:", err);
-      throw new Error(errorMessage, { cause: err });
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -97,7 +98,7 @@ export const useDoctors = () => {
           err.message || err.data?.message || "Failed to search doctors";
         setSearchError(errorMessage);
         console.error("Error searching doctors:", err);
-        throw new Error(errorMessage, { cause: err });
+        throw err;
       } finally {
         setSearchLoading(false);
       }
@@ -109,6 +110,7 @@ export const useDoctors = () => {
   const fetchMyProfile = useCallback(async () => {
     setProfileLoading(true);
     setProfileError(null);
+    setProfileNotFound(false);
     try {
       const response = await doctorAPI.getMyProfile();
 
@@ -120,11 +122,16 @@ export const useDoctors = () => {
         throw new Error(response.message || "Failed to fetch your profile");
       }
     } catch (err) {
+      // Check if it's a 404 Not Found error (profile doesn't exist)
+      const statusCode = err.cause?.response?.status || err.response?.status;
+      if (statusCode === 404) {
+        setProfileNotFound(true);
+      }
+
       const errorMessage =
         err.message || err.data?.message || "Failed to fetch your profile";
       setProfileError(errorMessage);
       console.error("Error fetching my profile:", err);
-      throw new Error(errorMessage, { cause: err });
     } finally {
       setProfileLoading(false);
     }
@@ -149,7 +156,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to fetch doctor";
       setError(errorMessage);
       console.error("Error fetching doctor:", err);
-      throw new Error(errorMessage, { cause: err });
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -198,7 +205,7 @@ export const useDoctors = () => {
         const errorMessage = err.message || "Failed to create profile";
         setProfileError(errorMessage);
         console.error("Error creating profile:", err);
-        throw new Error(errorMessage, { cause: err });
+        throw err;
       } finally {
         setProfileLoading(false);
       }
@@ -240,7 +247,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to update profile";
       setProfileError(errorMessage);
       console.error("Error updating profile:", err);
-      throw new Error(errorMessage, { cause: err });
+      throw err;
     } finally {
       setProfileLoading(false);
     }
@@ -265,7 +272,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to delete profile";
       setProfileError(errorMessage);
       console.error("Error deleting profile:", err);
-      throw new Error(errorMessage, { cause: err });
+      throw err;
     } finally {
       setProfileLoading(false);
     }
@@ -303,7 +310,7 @@ export const useDoctors = () => {
         err.message || err.data?.message || "Failed to verify doctor";
       setProfileError(errorMessage);
       console.error("Error verifying doctor:", err);
-      throw new Error(errorMessage, { cause: err });
+      throw err;
     } finally {
       setProfileLoading(false);
     }
@@ -314,6 +321,7 @@ export const useDoctors = () => {
     setError(null);
     setSearchError(null);
     setProfileError(null);
+    setProfileNotFound(false);
   }, []);
 
   // Reset all state to initial values
@@ -354,6 +362,7 @@ export const useDoctors = () => {
     error,
     searchError,
     profileError,
+    profileNotFound,
 
     // API Methods
     fetchAllDoctors,
