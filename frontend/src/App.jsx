@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import MyReports from "./pages/patient/MyReports";
+import PatientDashboard from "./pages/patient/PatientDashboard";
 import PatientProfile from "./pages/patient/PatientProfile";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -34,6 +35,17 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <Home />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/patient/dashboard"
+          element={
+            <ProtectedRoute roles={["patient"]}>
+              <DashboardLayout userRole="patient">
+                <PatientDashboard />
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -122,17 +134,6 @@ function App() {
             <ProtectedRoute roles={["doctor"]}>
               <DashboardLayout userRole="doctor">
                 <ManageAvailability />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/patient/dashboard"
-          element={
-            <ProtectedRoute roles={["patient"]}>
-              <DashboardLayout>
-                <PatientDashboard />
               </DashboardLayout>
             </ProtectedRoute>
           }
