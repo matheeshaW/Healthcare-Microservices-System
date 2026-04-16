@@ -5,12 +5,14 @@
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
+import AccountSettingsModal from "../common/AccountSettingsModal";
 
 export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, updateUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   const notifications = [
     { id: 1, message: "New appointment request", time: "5 min ago" },
@@ -24,7 +26,8 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
   };
 
   const getRoleBadgeColor = () => {
-    switch (userRole) {
+    const role = user?.role || userRole;
+    switch (role) {
       case "doctor":
         return "bg-cyan-100 text-cyan-900";
       case "patient":
@@ -37,7 +40,13 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
   };
 
   const getRoleLabel = () => {
-    return userRole.charAt(0).toUpperCase() + userRole.slice(1);
+    const role = user?.role || userRole;
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
+
+  const openAccountSettings = () => {
+    setShowUserMenu(false);
+    setShowAccountSettings(true);
   };
 
   return (
@@ -212,7 +221,10 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
 
                   {/* Menu Items */}
                   <div className="divide-y divide-slate-200">
-                    <button className="w-full text-left px-4 py-3 hover:bg-slate-50 transition flex items-center gap-3">
+                    <button
+                      onClick={openAccountSettings}
+                      className="w-full text-left px-4 py-3 hover:bg-slate-50 transition flex items-center gap-3"
+                    >
                       <svg
                         className="w-5 h-5 text-slate-600"
                         fill="none"
@@ -276,6 +288,19 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
           </div>
         </div>
       </div>
+
+      <AccountSettingsModal
+        isOpen={showAccountSettings}
+        onClose={() => setShowAccountSettings(false)}
+        onAccountUpdated={(updatedUser) => {
+          updateUser(updatedUser);
+        }}
+        onAccountDeleted={() => {
+          setShowAccountSettings(false);
+          logout();
+          navigate("/login", { replace: true });
+        }}
+      />
     </nav>
   );
 };

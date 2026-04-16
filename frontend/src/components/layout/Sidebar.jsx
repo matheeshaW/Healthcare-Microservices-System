@@ -320,7 +320,7 @@ export function Sidebar({
         className={`
           fixed md:sticky top-16 left-0 h-[calc(100vh-4rem)]
           w-64 bg-white border-r border-slate-200
-          overflow-y-auto transition-transform duration-300 z-40
+          overflow-y-auto transition-transform duration-300 z-30
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
