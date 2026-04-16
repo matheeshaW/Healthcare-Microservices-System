@@ -3,10 +3,16 @@ import AppointmentStatusBadge from "./AppointmentStatusBadge";
 
 function AppointmentCard({ appointment, doctorName, onCancel, cancelling, onPay, payingId, paidAppointmentIds = [] }) {
   const appointmentId = appointment?._id;
-  const isCancelled = appointment?.status === "cancelled";
-  const isConfirmed = appointment?.status === "confirmed";
   
-  // 💳 Check if this specific appointment is already in our payment history
+  // Logic from BOTH branches merged
+  const status = appointment?.status;
+  const isCancelled = status === "cancelled";
+  const isConfirmed = status === "confirmed";
+  
+  // Logic from main: define who can cancel
+  const canCancel = status === "pending" || status === "confirmed";
+  
+  // Logic from your payment branch
   const isAlreadyPaid = paidAppointmentIds.includes(appointmentId);
 
   return (
@@ -16,7 +22,7 @@ function AppointmentCard({ appointment, doctorName, onCancel, cancelling, onPay,
           <h3 className="font-bold text-slate-900 text-lg">{doctorName || "Doctor"}</h3>
           <p className="text-sm text-slate-500">Booking ID: {appointmentId}</p>
         </div>
-        <AppointmentStatusBadge status={appointment?.status} />
+        <AppointmentStatusBadge status={status} />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -24,7 +30,7 @@ function AppointmentCard({ appointment, doctorName, onCancel, cancelling, onPay,
           View Details
         </Link>
 
-        {/* 💳 Pay Now logic with "Paid" block */}
+        {/* 💳 Payment Button Logic (Member 3's requirements) */}
         {isConfirmed && (
           isAlreadyPaid ? (
             <button disabled className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-lg text-sm font-bold cursor-not-allowed border border-slate-200">
@@ -41,13 +47,17 @@ function AppointmentCard({ appointment, doctorName, onCancel, cancelling, onPay,
           )
         )}
 
-        <button
-          onClick={() => onCancel?.(appointmentId)}
-          disabled={isCancelled || cancelling || isAlreadyPaid} // Block cancel if paid
-          className="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 disabled:opacity-30"
-        >
-          {cancelling ? "..." : "Cancel"}
-        </button>
+        {/* ❌ Cancellation Logic (Merged with Payment Check) */}
+        {canCancel && (
+          <button
+            onClick={() => onCancel?.(appointmentId)}
+            // Important: You can't cancel if it's already paid!
+            disabled={isCancelled || cancelling || isAlreadyPaid}
+            className="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            {cancelling ? "Cancelling..." : "Cancel"}
+          </button>
+        )}
       </div>
     </article>
   );
