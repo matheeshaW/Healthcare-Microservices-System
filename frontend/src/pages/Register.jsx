@@ -115,7 +115,9 @@ function Register() {
     } catch (err) {
       setMessage("");
       const errorMessage =
-        err?.response?.data?.message || "Registration failed";
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        "Registration failed";
       // Check if error is related to email being already registered
       if (
         errorMessage.toLowerCase().includes("email") ||

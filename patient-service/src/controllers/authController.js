@@ -23,8 +23,8 @@ exports.register = async (req, res) => {
 
     res.json({ success: true, user });
   } catch (err) {
-    // Handle duplicate email error
-    if (err.code === 11000 && err.keyPattern?.email) {
+    // Handle duplicate email error (check both keyPattern and keyValue for compatibility)
+    if (err.code === 11000 && (err.keyPattern?.email || err.keyValue?.email)) {
       return res.status(400).json({ message: "Email already exists" });
     }
     // Handle validation errors
@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
       const messages = Object.values(err.errors).map((e) => e.message);
       return res.status(400).json({ message: messages.join(", ") });
     }
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Server error: " + err.message });
   }
 };
 
@@ -62,6 +62,6 @@ exports.login = async (req, res) => {
       user,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Server error: " + err.message });
   }
 };
