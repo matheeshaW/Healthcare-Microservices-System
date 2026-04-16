@@ -7,8 +7,20 @@ function ReportUploader({ onUpload }) {
   const [category, setCategory] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [touched, setTouched] = useState({ name: false, file: false, category: false });
 
   const categories = ["Lab", "Imaging", "Discharge", "Other"];
+
+  const validationErrors = {
+    name: !name.trim() ? "Report name is required." : "",
+    file: !file ? "Report file is required." : "",
+    category: !category ? "Category is required." : "",
+  };
+
+  const hasVisibleWarnings =
+    (touched.name && validationErrors.name) ||
+    (touched.file && validationErrors.file) ||
+    (touched.category && validationErrors.category);
 
   const handleUpload = async () => {
     if (!file) {
@@ -21,6 +33,11 @@ function ReportUploader({ onUpload }) {
       return;
     }
 
+    if (!category) {
+      alert("Please select a category");
+      return;
+    }
+
     try {
       setSubmitting(true);
       await onUpload(file, { name: name.trim(), category, notes });
@@ -28,6 +45,7 @@ function ReportUploader({ onUpload }) {
       setName("");
       setCategory("");
       setNotes("");
+      setTouched({ name: false, file: false, category: false });
       alert("Report uploaded successfully");
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to upload report");
@@ -45,6 +63,14 @@ function ReportUploader({ onUpload }) {
         Attach your test result, scan, prescription, or discharge summary.
       </p>
 
+      {hasVisibleWarnings && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+          <p className="text-sm font-semibold text-amber-900">
+            Please fill in the highlighted fields below.
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-semibold text-slate-700">
@@ -56,7 +82,11 @@ function ReportUploader({ onUpload }) {
             placeholder="e.g. Blood Test - March 2026"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onBlur={() => setTouched((prev) => ({ ...prev, name: true }))}
           />
+          {touched.name && validationErrors.name && (
+            <p className="mt-1 text-xs text-red-600">{validationErrors.name}</p>
+          )}
         </div>
 
         <div>
@@ -66,8 +96,15 @@ function ReportUploader({ onUpload }) {
           <input
             className={inputClass}
             type="file"
-            onChange={(e) => setFile(e.target.files[0] || null)}
+            onChange={(e) => {
+              setFile(e.target.files[0] || null);
+              setTouched((prev) => ({ ...prev, file: true }));
+            }}
+            onBlur={() => setTouched((prev) => ({ ...prev, file: true }))}
           />
+          {touched.file && validationErrors.file && (
+            <p className="mt-1 text-xs text-red-600">{validationErrors.file}</p>
+          )}
         </div>
 
         <div>
@@ -77,7 +114,11 @@ function ReportUploader({ onUpload }) {
           <select
             className={inputClass}
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setTouched((prev) => ({ ...prev, category: true }));
+            }}
+            onBlur={() => setTouched((prev) => ({ ...prev, category: true }))}
           >
             <option value="">Select category</option>
             {categories.map((item) => (
@@ -86,6 +127,9 @@ function ReportUploader({ onUpload }) {
               </option>
             ))}
           </select>
+          {touched.category && validationErrors.category && (
+            <p className="mt-1 text-xs text-red-600">{validationErrors.category}</p>
+          )}
         </div>
       </div>
 
@@ -103,7 +147,7 @@ function ReportUploader({ onUpload }) {
       </div>
 
       <div className="mt-4 flex justify-end">
-        <Button onClick={handleUpload} loading={submitting} disabled={!file || !name.trim()}>
+        <Button onClick={handleUpload} loading={submitting} disabled={!file || !name.trim() || !category}>
           Upload Report
         </Button>
       </div>
