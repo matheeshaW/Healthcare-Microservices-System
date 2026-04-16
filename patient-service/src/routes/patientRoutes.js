@@ -6,6 +6,7 @@ const { authorize } = require("../middleware/roleMiddleware");
 const {
   upsertProfile,
   getProfile,
+  getUserById,
   deleteProfile
 } = require("../controllers/patientController");
 
