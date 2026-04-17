@@ -509,8 +509,7 @@ export const DoctorDashboard = () => {
                         </Button>
                       )}
 
-                      {(appt.status === "pending" ||
-                        appt.status === "confirmed") && (
+                      {appt.status === "confirmed" && (
                         <Button
                           size="sm"
                           variant="success"

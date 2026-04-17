@@ -47,7 +47,6 @@ export function Sidebar({
       { label: "Dashboard", icon: "grid", path: "/doctor/dashboard", badge: null },
       { label: "My Profile", icon: "user", path: "/doctor/profile", badge: null },
       { label: "Manage Availability", icon: "calendar", path: "/doctor/availability", badge: null },
-      { label: "My Prescriptions", icon: "document", path: "/doctor/prescriptions", badge: null },
       { label: "Telemedicine", icon: "video", path: "/telemedicine" },
     ];
 
