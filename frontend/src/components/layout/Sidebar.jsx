@@ -90,16 +90,9 @@ export function Sidebar({
         path: "/patient/payments",
         badge: null,
       },
+      { label: "Telemedicine", icon: "video", path: "/telemedicine", badge: null },
     ];
-    // Push Telemedicine to patient menu ONLY if they have paid
-    if (user?.role === "patient" && hasPaidAppointments) {
-      patientMenu.push({ 
-        label: "Telemedicine", 
-        icon: "video", 
-        path: "/telemedicine",
-       
-      });
-    }
+
 
     const adminMenu = [
       {
