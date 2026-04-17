@@ -23,6 +23,11 @@ export const usePatient = () => {
       const res = await getProfile();
       setProfile(res.data.data);
     } catch (err) {
+      if (err?.response?.status === 404) {
+        setProfile(null);
+        setError(null);
+        return;
+      }
       setError(err);
     } finally {
       setLoading(false);
