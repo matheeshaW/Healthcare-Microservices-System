@@ -10,10 +10,27 @@ function ReportUploader({ onUpload }) {
   const [touched, setTouched] = useState({ name: false, file: false, category: false });
 
   const categories = ["Lab", "Imaging", "Discharge", "Other"];
+  const allowedExtensions = ["jpg", "jpeg", "png", "pdf"];
+  const allowedMimeTypes = ["image/jpeg", "image/png", "application/pdf"];
+
+  const isSupportedFileType = (selectedFile) => {
+    if (!selectedFile) return false;
+
+    const extension = selectedFile.name.split(".").pop()?.toLowerCase() || "";
+    const hasAllowedExtension = allowedExtensions.includes(extension);
+    const hasAllowedMimeType = allowedMimeTypes.includes(selectedFile.type);
+
+    // Accept either a trusted MIME type or a valid extension to support browser differences.
+    return hasAllowedMimeType || hasAllowedExtension;
+  };
 
   const validationErrors = {
     name: !name.trim() ? "Report name is required." : "",
-    file: !file ? "Report file is required." : "",
+    file: !file
+      ? "Report file is required."
+      : !isSupportedFileType(file)
+        ? "Only JPG, JPEG, PNG, and PDF files are allowed."
+        : "",
     category: !category ? "Category is required." : "",
   };
 
@@ -25,6 +42,11 @@ function ReportUploader({ onUpload }) {
   const handleUpload = async () => {
     if (!file) {
       alert("Please choose a file first");
+      return;
+    }
+
+    if (!isSupportedFileType(file)) {
+      alert("Only JPG, JPEG, PNG, and PDF files are allowed.");
       return;
     }
 
@@ -96,6 +118,7 @@ function ReportUploader({ onUpload }) {
           <input
             className={inputClass}
             type="file"
+            accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
             onChange={(e) => {
               setFile(e.target.files[0] || null);
               setTouched((prev) => ({ ...prev, file: true }));
@@ -147,7 +170,7 @@ function ReportUploader({ onUpload }) {
       </div>
 
       <div className="mt-4 flex justify-end">
-        <Button onClick={handleUpload} loading={submitting} disabled={!file || !name.trim() || !category}>
+        <Button onClick={handleUpload} loading={submitting} disabled={!file || !name.trim() || !category || !!validationErrors.file}>
           Upload Report
         </Button>
       </div>
