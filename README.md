@@ -156,7 +156,7 @@ telemedicine-service/.env
 
 ```
 PORT=5006
-RABBITMQ_URL=amqp://localhost
+RABBITMQ_URL=amqp://rabbitmq:5672
 MONGO_URI=your_mongodb_connection
 JITSI_BASE_URL=https://meet.jit.si
 ```
@@ -165,15 +165,16 @@ payment-service/.env
 
 ```
 PORT=5005
-RABBITMQ_URL=amqp://localhost
+RABBITMQ_URL=amqp://rabbitmq:5672
 MONGO_URI=your_mongodb_connection
+STRIPE_SECRET_KEY=Your_Stripe_Secret_key
 ```
 
 notification-service/.env
 
 ```
 PORT=5004
-RABBITMQ_URL=amqp://localhost
+RABBITMQ_URL=amqp://rabbitmq:5672
 MONGO_URI=your_mongodb_connection
 EMAIL_USER=your_email
 EMAIL_PASS=your_app_password
@@ -870,10 +871,12 @@ Request body (JSON):
 
 ```json
 {
-  "appointmentId": "APP123",
-  "doctorId": "DOC456",
-  "patientId": "PAT789",
-  "startTime": "2026-04-15T10:00:00Z"
+  "success": true,
+  "data": {
+    "meetingLink": "https://meet.jit.si/SLIIT_HMS_APP123",
+    "appointmentId": "69f2e3a12b8c8c18a93e1def",
+    "status": "active"
+  }
 }
 ```
 
@@ -929,7 +932,7 @@ Success response example:
 ### 11) Process Payment
 
 Endpoint:
-`POST /api/payment/process`
+`POST /api/payment/create-checkout-session`
 
 Headers:
 
@@ -941,9 +944,7 @@ Request body (JSON):
 
 ```json
 {
-  "appointmentId": "APP123",
-  "amount": 2500,
-  "method": "card"
+  "appointmentId": "69f2e3a12b8c8c18a93e1def"
 }
 ```
 
