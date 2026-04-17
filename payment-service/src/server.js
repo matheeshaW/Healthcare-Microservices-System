@@ -27,7 +27,8 @@ app.use('/api/payment', paymentRoutes);
 async function startServer() {
     try {
         // 1. Connect to MongoDB 
-        await mongoose.connect(process.env.MONGO_URI);
+        await 
+mongoose.connect('mongodb+srv://admin:1234@cluster0.c6a4y.mongodb.net/healthcare');
         console.log('MongoDB connected for Payment Service');
 
         // 2. Connect to RabbitMQ 

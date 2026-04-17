@@ -8,7 +8,8 @@ const { authorize } = require("../middleware/roleMiddleware");
 const {
   uploadReport,
   getReports,
-  deleteReport
+  deleteReport,
+  getPatientReports,
 } = require("../controllers/reportController");
 
 // Upload (patient only)
@@ -17,23 +18,16 @@ router.post(
   authenticate,
   authorize("patient"),
   upload.single("file"),
-  uploadReport
+  uploadReport,
 );
 
-// Get reports
-router.get(
-  "/",
-  authenticate,
-  authorize("patient"),
-  getReports
-);
+// Get reports for a specific patient (doctors and others can view)
+router.get("/patient/:patientId", authenticate, getPatientReports);
+
+// Get current patient's reports
+router.get("/", authenticate, authorize("patient"), getReports);
 
 // Delete report
-router.delete(
-  "/:id",
-  authenticate,
-  authorize("patient"),
-  deleteReport
-);
+router.delete("/:id", authenticate, authorize("patient"), deleteReport);
 
 module.exports = router;

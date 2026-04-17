@@ -179,6 +179,12 @@ app.use(
   }),
 );
 
+// Reports Service Route
+app.use("/api/reports", authenticate, createProxyMiddleware({
+  target: process.env.PATIENT_SERVICE_URL,
+  changeOrigin: true,
+  pathRewrite: (path) => `/api/reports${path}`
+}));
 app.use(
   "/api/reports",
   authenticate,
@@ -248,6 +254,27 @@ app.use(
     target: process.env.DOCTOR_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/api/availability${path}`,
+    onError: (err, req, res) => {
+      console.error(
+        "Gateway Error: Doctor Service is unreachable.",
+        err.message,
+      );
+      res.status(502).json({
+        success: false,
+        error: "Doctor Service is currently offline.",
+      });
+    },
+  }),
+);
+
+// Prescription Routes
+app.use(
+  "/api/prescriptions",
+  authenticate,
+  createProxyMiddleware({
+    target: process.env.DOCTOR_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/prescriptions${path}`,
     onError: (err, req, res) => {
       console.error(
         "Gateway Error: Doctor Service is unreachable.",

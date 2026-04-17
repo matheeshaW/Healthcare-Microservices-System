@@ -4,7 +4,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Card, Spinner, Badge, Button } from "../../components/ui";
-import { getAllAppointments, getApiErrorMessage } from "../../api/appointment.api";
+import {
+  getAllAppointments,
+  getApiErrorMessage,
+  cancelAppointment,
+} from "../../api/appointment.api";
 import { getDoctorById } from "../../api/doctor.api";
 import { getPatientById } from "../../api/patient.api";
 
@@ -35,6 +39,7 @@ export const AdminAppointments = () => {
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     loadAppointments();
@@ -48,17 +53,21 @@ export const AdminAppointments = () => {
       const list = await getAllAppointments();
       setAppointments(list);
 
-      const uniquePatientIds = [...new Set(list.map((item) => item.patientId).filter(Boolean))];
-      const uniqueDoctorIds = [...new Set(list.map((item) => item.doctorId).filter(Boolean))];
+      const uniquePatientIds = [
+        ...new Set(list.map((item) => item.patientId).filter(Boolean)),
+      ];
+      const uniqueDoctorIds = [
+        ...new Set(list.map((item) => item.doctorId).filter(Boolean)),
+      ];
 
       const [patientEntries, doctorEntries] = await Promise.all([
         Promise.all(
           uniquePatientIds.map(async (patientId) => {
             try {
               const response = await getPatientById(patientId);
-              return [patientId, response?.data?.data?.name || ""];
+              return [patientId, response?.data?.data?.name || "Deleted User"];
             } catch {
-              return [patientId, ""];
+              return [patientId, "Deleted User"];
             }
           }),
         ),
@@ -66,16 +75,21 @@ export const AdminAppointments = () => {
           uniqueDoctorIds.map(async (doctorId) => {
             try {
               const response = await getDoctorById(doctorId);
-              return [doctorId, response?.data?.name || response?.data?.data?.name || ""];
+              return [
+                doctorId,
+                response?.data?.name ||
+                  response?.data?.data?.name ||
+                  "Deleted Doctor",
+              ];
             } catch {
-              return [doctorId, ""];
+              return [doctorId, "Deleted Doctor"];
             }
           }),
         ),
       ]);
 
-      setPatientNames(Object.fromEntries(patientEntries.filter(([, name]) => name)));
-      setDoctorNames(Object.fromEntries(doctorEntries.filter(([, name]) => name)));
+      setPatientNames(Object.fromEntries(patientEntries));
+      setDoctorNames(Object.fromEntries(doctorEntries));
     } catch (requestError) {
       setError(getApiErrorMessage(requestError));
     } finally {
@@ -83,11 +97,33 @@ export const AdminAppointments = () => {
     }
   };
 
+  const handleDelete = async (appointmentId) => {
+    if (!window.confirm("Are you sure you want to delete this appointment?")) {
+      return;
+    }
+
+    try {
+      setDeletingId(appointmentId);
+      await cancelAppointment(appointmentId);
+      setAppointments((prev) =>
+        prev.filter((apt) => apt._id !== appointmentId),
+      );
+      setError(null); // Clear any previous errors on success
+    } catch (requestError) {
+      const errorMsg = getApiErrorMessage(requestError);
+      setError(`Failed to delete appointment: ${errorMsg}`);
+      console.error("Delete error:", requestError);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const summary = useMemo(() => {
     return appointments.reduce(
       (accumulator, appointment) => {
         accumulator.total += 1;
-        accumulator[appointment.status] = (accumulator[appointment.status] || 0) + 1;
+        accumulator[appointment.status] =
+          (accumulator[appointment.status] || 0) + 1;
         return accumulator;
       },
       { total: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 },
@@ -96,13 +132,18 @@ export const AdminAppointments = () => {
 
   const filteredAppointments = useMemo(() => {
     const filtered = appointments.filter((appointment) => {
-      const matchesStatus = filterStatus === "all" || appointment.status === filterStatus;
-      const patientLabel = patientNames[appointment.patientId] || appointment.patientId || "";
-      const doctorLabel = doctorNames[appointment.doctorId] || appointment.doctorId || "";
+      const matchesStatus =
+        filterStatus === "all" || appointment.status === filterStatus;
+      const patientLabel =
+        patientNames[appointment.patientId] || appointment.patientId || "";
+      const doctorLabel =
+        doctorNames[appointment.doctorId] || appointment.doctorId || "";
       const matchesSearch =
         patientLabel.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doctorLabel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        String(appointment._id).toLowerCase().includes(searchTerm.toLowerCase());
+        String(appointment._id)
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
 
       return matchesStatus && matchesSearch;
     });
@@ -135,7 +176,11 @@ export const AdminAppointments = () => {
 
       {loading && (
         <Card padding="lg" className="text-center">
-          <Spinner size="lg" variant="primary" label="Loading appointments..." />
+          <Spinner
+            size="lg"
+            variant="primary"
+            label="Loading appointments..."
+          />
         </Card>
       )}
 
@@ -149,11 +194,17 @@ export const AdminAppointments = () => {
               ["Completed", summary.completed, "success"],
               ["Cancelled", summary.cancelled, "danger"],
             ].map(([label, value, variant]) => (
-              <Card key={label} padding="md" className="border-0 bg-white shadow-sm">
+              <Card
+                key={label}
+                padding="md"
+                className="border-0 bg-white shadow-sm"
+              >
                 <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
                   {label}
                 </p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">
+                  {value}
+                </p>
                 <Badge variant={variant}>{label}</Badge>
               </Card>
             ))}
@@ -213,16 +264,24 @@ export const AdminAppointments = () => {
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4">Payment</th>
                       <th className="py-3 px-4">Appointment ID</th>
+                      <th className="py-3 px-4">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAppointments.map((appointment) => (
-                      <tr key={appointment._id} className="border-b border-slate-200 hover:bg-slate-50">
+                      <tr
+                        key={appointment._id}
+                        className="border-b border-slate-200 hover:bg-slate-50"
+                      >
                         <td className="py-3 px-4 font-semibold text-slate-900">
-                          {patientNames[appointment.patientId] || appointment.patientId || "N/A"}
+                          {patientNames[appointment.patientId] ||
+                            appointment.patientId ||
+                            "N/A"}
                         </td>
                         <td className="py-3 px-4 text-slate-700">
-                          {doctorNames[appointment.doctorId] || appointment.doctorId || "N/A"}
+                          {doctorNames[appointment.doctorId] ||
+                            appointment.doctorId ||
+                            "N/A"}
                         </td>
                         <td className="py-3 px-4 text-slate-700">
                           {formatDate(appointment.date)}
@@ -231,7 +290,11 @@ export const AdminAppointments = () => {
                           {appointment.time || "N/A"}
                         </td>
                         <td className="py-3 px-4">
-                          <Badge variant={statusVariants[appointment.status] || "default"}>
+                          <Badge
+                            variant={
+                              statusVariants[appointment.status] || "default"
+                            }
+                          >
                             {appointment.status || "unknown"}
                           </Badge>
                         </td>
@@ -240,6 +303,17 @@ export const AdminAppointments = () => {
                         </td>
                         <td className="py-3 px-4 text-xs font-mono text-slate-500">
                           {appointment._id}
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => handleDelete(appointment._id)}
+                            disabled={deletingId === appointment._id}
+                            className="px-3 py-1 bg-red-100 text-red-600 rounded text-sm font-medium hover:bg-red-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {deletingId === appointment._id
+                              ? "Deleting..."
+                              : "Delete"}
+                          </button>
                         </td>
                       </tr>
                     ))}

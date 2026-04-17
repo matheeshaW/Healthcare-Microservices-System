@@ -1,68 +1,50 @@
 const crypto = require('crypto');
 const Payment = require('../models/Payment');
-const { sendNotification } = require('../services/rabbitmqService');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); 
+const { sendNotification } = require('../services/rabbitmqService'); 
 
-// ==========================================
-// 1. STRIPE GATEWAY (Get the Checkout URL)
-// ==========================================
-const createCheckoutSession = async (req, res) => {
+// 1. STRIPE GATEWAY
+exports.createCheckoutSession = async (req, res) => {
     try {
         const { appointmentId } = req.body;
-        
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);        
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            line_items: [
-                {
-                    price_data: {
-                        currency: 'lkr',
-                        product_data: {
-                            name: 'Doctor Consultation Fee',
-                            description: `Appointment ID: ${appointmentId}`,
-                        },
-                        unit_amount: 250000, // 2500.00 LKR
-                    },
-                    quantity: 1,
+            line_items: [{
+                price_data: {
+                    currency: 'lkr',
+                    product_data: { name: 'Doctor Consultation Fee' },
+                    unit_amount: 250000, 
                 },
-            ],
+                quantity: 1,
+            }],
             mode: 'payment',
-            metadata: { appointmentId: appointmentId },
-            // Pass the appointment ID back in the URL so React knows which one was paid!
-            success_url: `${process.env.FRONTEND_URL}/appointment/my?payment=success&appointmentId=${appointmentId}`,
-            cancel_url: `${process.env.FRONTEND_URL}/appointment/my?payment=cancelled`,
+            metadata: { appointmentId },
+            success_url: `http://localhost:5173/appointment/my?payment=success&appointmentId=${appointmentId}`,
+            cancel_url: 'http://localhost:5173/appointment/my?payment=cancelled'
         });
-
         res.json({ url: session.url });
     } catch (error) {
-        console.error("Stripe Error:", error);
-        res.status(500).json({ error: "Failed to create payment session." });
+        res.status(500).json({ error: error.message });
     }
 };
-// ==========================================
-// 2. YOUR CUSTOM DB & RABBITMQ PROCESSOR
-// ==========================================
-const processPayment = async (req, res) => {
+
+// 2. PROCESS PAYMENT (Triggers RabbitMQ)
+exports.processPayment = async (req, res) => {
     try {
-        const { appointmentId, patientId, patientEmail, amount } = req.body;
-
-        if (!appointmentId || !patientId || !patientEmail || !amount) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Missing required fields: appointmentId, patientId, patientEmail, and amount are required.' 
-            });
-        }
-
-        if (amount <= 0 || isNaN(amount)) {
-            return res.status(400).json({ success: false, error: 'Invalid payment amount.' });
-        }
-
+        const { appointmentId, patientId, patientEmail, amount, doctorId } = req.body;
         const transactionId = "TXN_" + crypto.randomBytes(6).toString('hex').toUpperCase();
 
         const newPayment = new Payment({
-            appointmentId, patientId, patientEmail, amount, status: 'success', transactionId
+            appointmentId,
+            patientId,
+            doctorId: doctorId || "DOC_PENDING",
+            patientEmail,
+            amount,
+            status: 'success',
+            transactionId
         });
+
         await newPayment.save();
-        console.log(`💰 Payment saved to DB: ${transactionId}`);
 
         // --- NEW: SERVER-TO-SERVER COMMUNICATION ---
         // Tell your teammate's Appointment Service (Port 5000) that the payment is done!
@@ -90,39 +72,34 @@ const processPayment = async (req, res) => {
         // Trigger the Notification Service
         try {
             await sendNotification({
-                patientEmail: patientEmail,
-                message: `Hello! Your payment of Rs. ${amount} for appointment ${appointmentId} was successful. Your transaction ID is ${transactionId}.`
+                patientEmail: patientEmail, 
+                message: `Success! Payment of Rs. ${amount} received. TXN: ${transactionId}.`
             });
-            console.log('🚀 Receipt request sent to Notification Service!');
-        } catch (brokerErr) {
-            console.error('⚠️ Payment saved, but failed to send to RabbitMQ:', brokerErr.message);
+        } catch (rabbitErr) {
+            console.error("RabbitMQ Notification failed");
         }
 
-        res.status(200).json({ success: true, message: 'Payment processed successfully', transactionId });
+        res.status(200).json({ success: true, transactionId });
     } catch (error) {
-        console.error('Payment Processing Error:', error);
-        res.status(500).json({ success: false, error: 'Payment processing failed' });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
-// ==========================================
-// 3. READ HISTORY
-// ==========================================
-const getPaymentHistory = async (req, res) => {
+
+// 3. GET HISTORY (REPAIRED LOGIC)
+exports.getPaymentHistory = async (req, res) => {
     try {
-        const { patientId } = req.params;
+        const { id } = req.params;
         
-        if (!patientId) {
-             return res.status(400).json({ success: false, error: 'Patient ID is required.' });
-        }
+        // Use $or to find the ID in either column to be 100% safe for the demo
+        const payments = await Payment.find({
+            $or: [
+                { patientId: id },
+                { doctorId: id }
+            ]
+        }).sort({ createdAt: -1 });
 
-        const payments = await Payment.find({ patientId }).sort({ createdAt: -1 });
-        
-        res.status(200).json({ success: true, count: payments.length, data: payments });
+        res.status(200).json({ success: true, data: payments });
     } catch (error) {
-        console.error('History Fetch Error:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch payment history' });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
-
-// Export all three functions!
-module.exports = { createCheckoutSession, processPayment, getPaymentHistory };

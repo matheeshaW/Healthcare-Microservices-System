@@ -78,79 +78,31 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
 
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-linear-to-br from-cyan-600 to-emerald-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">H</span>
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-lg font-bold text-slate-900">Healthcare</h1>
-                <p className="text-xs text-slate-600">Microservices</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Section: Notifications, User Menu */}
-          <div className="flex items-center gap-4">
-            {/* Notifications */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 hover:bg-slate-100 rounded-lg transition"
-                aria-label="Notifications"
-              >
+              <div className="w-10 h-10 bg-linear-to-br from-cyan-600 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
+                {/* Medical Plus Icon */}
                 <svg
-                  className="w-6 h-6 text-slate-700"
+                  className="w-6 h-6 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  strokeWidth={2.5}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    d="M12 4v16m8-8H4"
                   />
                 </svg>
-                <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full"></span>
-              </button>
-
-              {/* Notifications Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden">
-                  <div className="p-4 border-b border-slate-200 bg-slate-50">
-                    <h3 className="font-bold text-slate-900">Notifications</h3>
-                  </div>
-
-                  {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-slate-600">
-                      No new notifications
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-slate-200">
-                      {notifications.map((notif) => (
-                        <div
-                          key={notif.id}
-                          className="p-4 hover:bg-slate-50 transition cursor-pointer"
-                        >
-                          <p className="text-sm font-semibold text-slate-900">
-                            {notif.message}
-                          </p>
-                          <p className="text-xs text-slate-600 mt-1">
-                            {notif.time}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="p-4 border-t border-slate-200 bg-slate-50 text-center">
-                    <button className="text-sm font-semibold text-cyan-600 hover:text-cyan-700">
-                      View All
-                    </button>
-                  </div>
-                </div>
-              )}
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-bold text-slate-900">Healthcare</h1>
+                <p className="text-xs text-slate-600">Management System</p>
+              </div>
             </div>
+          </div>
 
+          {/* Right Section: User Menu */}
+          <div className="flex items-center gap-4">
             {/* User Menu */}
             <div className="relative">
               <button
@@ -240,25 +192,6 @@ export const Navbar = ({ userRole = "doctor", onMenuToggle }) => {
                       </svg>
                       <span className="text-sm font-semibold text-slate-900">
                         Account Settings
-                      </span>
-                    </button>
-
-                    <button className="w-full text-left px-4 py-3 hover:bg-slate-50 transition flex items-center gap-3">
-                      <svg
-                        className="w-5 h-5 text-slate-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
-                        />
-                      </svg>
-                      <span className="text-sm font-semibold text-slate-900">
-                        Help & Support
                       </span>
                     </button>
 

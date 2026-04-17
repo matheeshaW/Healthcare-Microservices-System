@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   cancelAppointment,
   createAppointment,
+  deleteAppointment,
   getApiErrorMessage,
   getMyAppointmentById,
   getMyAppointments,
@@ -17,6 +18,7 @@ function useAppointments() {
   const [cancellingId, setCancellingId] = useState("");
   const [reschedulingId, setReschedulingId] = useState("");
   const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [deletingId, setDeletingId] = useState("");
 
   const clearError = useCallback(() => {
     setError("");
@@ -50,7 +52,9 @@ function useAppointments() {
         }
 
         setAppointments((current) => {
-          const index = current.findIndex((item) => item._id === nextAppointment._id);
+          const index = current.findIndex(
+            (item) => item._id === nextAppointment._id,
+          );
 
           if (index === -1) {
             return [nextAppointment, ...current];
@@ -169,6 +173,27 @@ function useAppointments() {
     }
   }, []);
 
+  const deleteMine = useCallback(async (appointmentId) => {
+    setDeletingId(appointmentId);
+    setError("");
+
+    try {
+      await deleteAppointment(appointmentId);
+
+      setAppointments((current) =>
+        current.filter((item) => item._id !== appointmentId),
+      );
+
+      return true;
+    } catch (requestError) {
+      const message = getApiErrorMessage(requestError);
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setDeletingId("");
+    }
+  }, []);
+
   return {
     appointments,
     loading,
@@ -177,11 +202,13 @@ function useAppointments() {
     cancellingId,
     reschedulingId,
     realtimeConnected,
+    deletingId,
     clearError,
     fetchMine,
     createForPatient,
     cancelMine,
     rescheduleMine,
+    deleteMine,
     fetchAppointmentById,
   };
 }
