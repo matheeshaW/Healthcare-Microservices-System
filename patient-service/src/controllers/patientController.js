@@ -86,7 +86,11 @@ exports.getProfile = async (req, res) => {
     });
 
     if (!profile) {
-      return res.status(404).json({ message: "Profile not found" });
+      return res.json({
+        success: true,
+        data: null,
+        message: "Profile not created yet"
+      });
     }
 
     res.json({
